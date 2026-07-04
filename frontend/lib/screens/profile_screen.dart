@@ -54,7 +54,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final box = Hive.box('user_box');
     final email = box.get('email', defaultValue: '');
     final username = box.get('username', defaultValue: 'User');
+    final societyId = box.get('society_id');
     final societyName = box.get('society_name');
+    final hasSociety = societyId != null;
 
     return Scaffold(
       appBar: AppBar(title: Text(AppStrings.get('profile', lang: lang))),
@@ -73,7 +75,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Text('$email',
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: Colors.grey)),
-          if (societyName != null)
+          if (hasSociety)
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text('Society: $societyName',
@@ -95,13 +97,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onTap: () => Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const MySkillsScreen())),
           ),
+          const Divider(),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+            child: Text(
+              'Society',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade600,
+              ),
+            ),
+          ),
           ListTile(
             leading: const Icon(Icons.add_home_outlined),
-            title: const Text('Create / Join Society'),
+            title: Text(hasSociety ? 'Change Society' : 'Create / Join Society'),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () => Navigator.pushNamed(context, '/add-society'),
+            onTap: () =>
+                Navigator.pushNamed(context, '/add-society'),
           ),
-          if (societyName != null)
+          if (hasSociety)
             ListTile(
               leading: _isLeaving
                   ? const SizedBox(

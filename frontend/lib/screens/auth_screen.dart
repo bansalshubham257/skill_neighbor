@@ -44,6 +44,7 @@ class _AuthScreenState extends State<AuthScreen> {
       box.put('email', result['email']);
       if (result['society_id'] != null) {
         box.put('society_id', result['society_id']);
+        box.put('society_name', result['society_name']);
       }
 
       if (mounted) {

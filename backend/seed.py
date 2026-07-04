@@ -57,6 +57,7 @@ users_data = [
     ("user8","user8","user8@test.com","Gardening","Landscaping & plant care","Gardening",250,"+919000000008"),
     ("user9","user9","user9@test.com","Pet Grooming","Dogs & cats grooming","Pet Care",300,"+919000000009"),
     ("user10","user10","user10@test.com","Web Development","Full-stack dev","IT Support",1000,"+919000000010"),
+    ("shubham","shubham","shubham@test.com","Carpentry","Custom furniture & repair","Carpentry",450,"+919000000011"),
 ]
 
 created_societies = []
@@ -69,6 +70,19 @@ for i, (name, dist, angle) in enumerate(societies_data):
 
 print("")
 for i, (uname, pwd, email, stitle, sdesc, cat, rate, phone) in enumerate(users_data):
+    if uname == "shubham":
+        # shubham has no society - forced to choose on first login
+        user = db.query(User).filter(User.username == uname).first()
+        if not user:
+            user = User(username=uname, password=pwd, email=email, latitude=clat, longitude=clng)
+            db.add(user); db.commit(); db.refresh(user)
+        db.add(Skill(user_id=user.id, title=stitle, description=sdesc, category=cat, price_type="Fixed", hourly_rate=rate, phone_number=phone))
+        for tt in ["CONTACT", "CHAT", "BOOKMARK"]:
+            db.add(AdToken(user_id=user.id, token_type=tt, count=5))
+        db.commit()
+        print(f"  User: {uname} -> {stitle} (no society)")
+        continue
+
     slat, slng = offset(clat, clng, societies_data[i][1], societies_data[i][2])
     user = db.query(User).filter(User.username == uname).first()
     if not user:

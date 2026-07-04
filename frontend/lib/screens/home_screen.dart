@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
+import '../services/api_service.dart';
 import '../services/settings_service.dart';
 import 'skill_list_screen.dart';
 import 'add_skill_screen.dart';
 import 'profile_screen.dart';
+import 'notifications_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,11 +20,21 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   bool showNearby = true;
   Position? _currentPosition;
+  int _notifCount = 0;
 
   @override
   void initState() {
     super.initState();
     _getLocation();
+    _loadNotifCount();
+  }
+
+  Future<void> _loadNotifCount() async {
+    try {
+      final api = Provider.of<ApiService>(context, listen: false);
+      final count = await api.fetchNotificationCount();
+      if (mounted) setState(() => _notifCount = count);
+    } catch (_) {}
   }
 
   Future<void> _getLocation() async {
@@ -54,6 +66,34 @@ class _HomeScreenState extends State<HomeScreen> {
           ? AppBar(
               title: const Text('SkillNeighbor'),
               actions: [
+                Stack(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.notifications),
+                      onPressed: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())).then((_) => _loadNotifCount());
+                      },
+                    ),
+                    if (_notifCount > 0)
+                      Positioned(
+                        right: 6,
+                        top: 6,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                          child: Text(
+                            '$_notifCount',
+                            style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
                 IconButton(
                   icon: const Icon(Icons.person),
                   onPressed: () {

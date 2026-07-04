@@ -49,6 +49,10 @@ class AppStrings {
       'system': 'System',
       'privacy': 'Privacy Policy',
       'terms': 'Terms & Conditions',
+      'notifications': 'Notifications',
+      'no_notifications': 'No notifications yet.',
+      'search_hint': 'Search skills...',
+      'no_match': 'No skills match your search.',
     },
     'hi': {
       'explore': 'खोजें',
@@ -73,6 +77,10 @@ class AppStrings {
       'system': 'सिस्टम',
       'privacy': 'गोपनीयता नीति',
       'terms': 'नियम और शर्तें',
+      'notifications': 'सूचनाएं',
+      'no_notifications': 'अभी तक कोई सूचना नहीं।',
+      'search_hint': 'कौशल खोजें...',
+      'no_match': 'आपकी खोज से कोई कौशल मेल नहीं खाता।',
     },
   };
 

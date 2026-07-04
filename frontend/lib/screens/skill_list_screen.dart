@@ -25,7 +25,30 @@ class SkillListScreen extends StatefulWidget {
 class _SkillListScreenState extends State<SkillListScreen> {
   double radius = 2.0;
   List<dynamic> skills = [];
+  List<dynamic> filteredSkills = [];
   bool isLoading = true;
+  Set<int> likedSkillIds = {};
+  final TextEditingController _searchCtrl = TextEditingController();
+
+  Future<void> _toggleLike(int skillId) async {
+    try {
+      final api = Provider.of<ApiService>(context, listen: false);
+      final result = await api.likeSkill(skillId);
+      setState(() {
+        if (result['status'] == 'liked') {
+          likedSkillIds.add(skillId);
+        } else {
+          likedSkillIds.remove(skillId);
+        }
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$e')),
+        );
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -63,19 +86,57 @@ class _SkillListScreenState extends State<SkillListScreen> {
           skills = [];
         }
       }
+      likedSkillIds.clear();
+      for (final s in skills) {
+        if (s['is_liked'] == true) {
+          likedSkillIds.add(s['id']);
+        }
+      }
+      _filter();
     } catch (e) {
       skills = [];
     }
     setState(() => isLoading = false);
   }
 
+  void _filter() {
+    final q = _searchCtrl.text.toLowerCase();
+    setState(() {
+      if (q.isEmpty) {
+        filteredSkills = List.from(skills);
+      } else {
+        filteredSkills = skills.where((s) {
+          final title = (s['title'] ?? '').toString().toLowerCase();
+          final desc = (s['description'] ?? '').toString().toLowerCase();
+          final cat = (s['category'] ?? '').toString().toLowerCase();
+          return title.contains(q) || desc.contains(q) || cat.contains(q);
+        }).toList();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: TextField(
+            controller: _searchCtrl,
+            decoration: InputDecoration(
+              hintText: AppStrings.get('search_hint', lang: context.read<SettingsService>().language),
+              prefixIcon: const Icon(Icons.search),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+              filled: true,
+              fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withAlpha(80),
+            ),
+            onChanged: (_) => _filter(),
+          ),
+        ),
         if (widget.isNearby)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Row(
               children: [
                 const Text("Radius: "),
@@ -99,20 +160,22 @@ class _SkillListScreenState extends State<SkillListScreen> {
         Expanded(
           child: isLoading
               ? const Center(child: CircularProgressIndicator())
-              : skills.isEmpty
+              : filteredSkills.isEmpty
                   ? Center(
                       child: Text(
-                        widget.isNearby
-                            ? AppStrings.get('no_skills_nearby', lang: context.read<SettingsService>().language)
-                            : '${AppStrings.get('no_skills_society', lang: context.read<SettingsService>().language)}\nAdd one from the Profile tab!',
+                        skills.isEmpty
+                            ? (widget.isNearby
+                                ? AppStrings.get('no_skills_nearby', lang: context.read<SettingsService>().language)
+                                : '${AppStrings.get('no_skills_society', lang: context.read<SettingsService>().language)}\nAdd one from the Profile tab!')
+                            : 'No skills match your search.',
                         textAlign: TextAlign.center,
                         style: const TextStyle(color: Colors.grey),
                       ),
                     )
                   : ListView.builder(
-                      itemCount: skills.length,
+                      itemCount: filteredSkills.length,
                       itemBuilder: (context, index) {
-                        final skill = skills[index];
+                        final skill = filteredSkills[index];
                         final societyName = skill['society_name'];
                         final skillSocietyId = skill['society_id'];
                         final isSameSociety = widget.userSocietyId != null &&
@@ -184,8 +247,27 @@ class _SkillListScreenState extends State<SkillListScreen> {
                               ],
                             ),
                             isThreeLine: true,
-                            trailing:
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: Icon(
+                                    likedSkillIds.contains(skill['id'])
+                                        ? Icons.favorite
+                                        : Icons.favorite_border,
+                                    color: likedSkillIds.contains(skill['id'])
+                                        ? Colors.red
+                                        : Colors.grey,
+                                    size: 20,
+                                  ),
+                                  onPressed: () => _toggleLike(skill['id']),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(
+                                      minWidth: 36, minHeight: 36),
+                                ),
                                 const Icon(Icons.arrow_forward_ios, size: 16),
+                              ],
+                            ),
                             onTap: () {
                               Navigator.push(
                                 context,

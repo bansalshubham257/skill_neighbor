@@ -138,17 +138,52 @@ class ApiService {
 
   Future<List<dynamic>> fetchNearbySkills(
       double lat, double lng, double radius) async {
+    final uid = userId;
     final response = await _dio.get('/skills/nearby', queryParameters: {
       'lat': lat,
       'lng': lng,
       'radius': radius,
+      if (uid != null) 'current_user_id': uid,
     });
     return response.data;
   }
 
   Future<List<dynamic>> fetchSocietySkills(int societyId) async {
-    final response = await _dio.get('/skills/society/$societyId');
+    final uid = userId;
+    final response = await _dio.get('/skills/society/$societyId', queryParameters: {
+      if (uid != null) 'current_user_id': uid,
+    });
     return response.data;
+  }
+
+  // Likes
+  Future<Map<String, dynamic>> likeSkill(int skillId) async {
+    final uid = userId;
+    if (uid == null) throw Exception("Not logged in");
+    final response = await _dio.post('/skills/like', queryParameters: {
+      'skill_id': skillId,
+      'user_id': uid,
+    });
+    return response.data;
+  }
+
+  // Notifications
+  Future<List<dynamic>> fetchNotifications() async {
+    final uid = userId;
+    if (uid == null) throw Exception("Not logged in");
+    final response = await _dio.get('/notifications', queryParameters: {
+      'user_id': uid,
+    });
+    return response.data;
+  }
+
+  Future<int> fetchNotificationCount() async {
+    final uid = userId;
+    if (uid == null) return 0;
+    final response = await _dio.get('/notifications/count', queryParameters: {
+      'user_id': uid,
+    });
+    return response.data['count'] ?? 0;
   }
 
   // Rewards

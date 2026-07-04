@@ -16,24 +16,35 @@ class SettingsScreen extends StatelessWidget {
       appBar: AppBar(title: Text(AppStrings.get('settings', lang: lang))),
       body: ListView(
         children: [
-          ListTile(
-            leading: const Icon(Icons.language),
-            title: Text(AppStrings.get('language', lang: lang)),
-            subtitle: Text(lang == 'hi' ? 'हिन्दी' : 'English'),
-            trailing: SegmentedButton<String>(
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Text(
+              AppStrings.get('language', lang: lang),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: SegmentedButton<String>(
               segments: const [
-                ButtonSegment(value: 'en', label: Text('EN')),
-                ButtonSegment(value: 'hi', label: Text('हि')),
+                ButtonSegment(value: 'en', label: Text('English')),
+                ButtonSegment(value: 'hi', label: Text('हिन्दी')),
               ],
               selected: {lang},
               onSelectionChanged: (v) => settings.setLanguage(v.first),
             ),
           ),
-          ListTile(
-            leading: const Icon(Icons.brightness_6),
-            title: Text(AppStrings.get('theme', lang: lang)),
-            subtitle: Text(_themeName(settings.themeMode, lang)),
-            trailing: SegmentedButton<String>(
+          const SizedBox(height: 24),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+            child: Text(
+              AppStrings.get('theme', lang: lang),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: SegmentedButton<String>(
               segments: [
                 ButtonSegment(value: 'light', label: Text(AppStrings.get('light', lang: lang))),
                 ButtonSegment(value: 'dark', label: Text(AppStrings.get('dark', lang: lang))),
@@ -43,7 +54,7 @@ class SettingsScreen extends StatelessWidget {
               onSelectionChanged: (v) => settings.setTheme(v.first),
             ),
           ),
-          const Divider(),
+          const Divider(height: 32),
           ListTile(
             leading: const Icon(Icons.privacy_tip),
             title: Text(AppStrings.get('privacy', lang: lang)),
@@ -59,14 +70,6 @@ class SettingsScreen extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _themeName(ThemeMode mode, String lang) {
-    switch (mode) {
-      case ThemeMode.light: return AppStrings.get('light', lang: lang);
-      case ThemeMode.dark: return AppStrings.get('dark', lang: lang);
-      default: return AppStrings.get('system', lang: lang);
-    }
   }
 
   String _themeKey(ThemeMode mode) {

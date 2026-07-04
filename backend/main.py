@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from typing import Optional
 from pydantic import BaseModel
-from models import Base, User, Society, Skill, AdToken
+from models import Base, User, Society, Skill, AdToken, SkillLike
 import os
 import math
 import datetime
@@ -86,12 +86,17 @@ async def login(data: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == data.username, User.password == data.password).first()
     if not user:
         raise HTTPException(status_code=401, detail="Invalid username or password")
+    society_name = None
+    if user.society_id:
+        society = db.query(Society).filter(Society.id == user.society_id).first()
+        society_name = society.name if society else None
     return {
         "status": "success",
         "user_id": user.id,
         "username": user.username,
         "email": user.email,
         "society_id": user.society_id,
+        "society_name": society_name,
     }
 
 @app.post("/auth/register")
@@ -228,7 +233,7 @@ async def join_society(user_id: int, society_id: int, db: Session = Depends(get_
 # --- Search Endpoints ---
 
 @app.get("/skills/nearby")
-async def get_nearby_skills(lat: float, lng: float, radius: float = 5.0, db: Session = Depends(get_db)):
+async def get_nearby_skills(lat: float, lng: float, radius: float = 5.0, current_user_id: int = None, db: Session = Depends(get_db)):
     users = db.query(User).all()
     nearby_user_ids = []
     for u in users:
@@ -239,6 +244,11 @@ async def get_nearby_skills(lat: float, lng: float, radius: float = 5.0, db: Ses
 
     if not nearby_user_ids:
         return []
+
+    liked_skill_ids = set()
+    if current_user_id:
+        likes = db.query(SkillLike).filter(SkillLike.user_id == current_user_id).all()
+        liked_skill_ids = {l.skill_id for l in likes}
 
     skills = db.query(Skill).filter(Skill.user_id.in_(nearby_user_ids)).all()
     result = []
@@ -256,13 +266,20 @@ async def get_nearby_skills(lat: float, lng: float, radius: float = 5.0, db: Ses
             "email": u.email if u else None,
             "society_id": u.society_id if u else None,
             "society_name": db.query(Society.name).filter(Society.id == u.society_id).scalar() if u and u.society_id else None,
+            "is_liked": s.id in liked_skill_ids,
         })
     return result
 
 @app.get("/skills/society/{society_id}")
-async def get_society_skills(society_id: int, db: Session = Depends(get_db)):
+async def get_society_skills(society_id: int, current_user_id: int = None, db: Session = Depends(get_db)):
     society = db.query(Society).filter(Society.id == society_id).first()
     society_name = society.name if society else None
+
+    liked_skill_ids = set()
+    if current_user_id:
+        likes = db.query(SkillLike).filter(SkillLike.user_id == current_user_id).all()
+        liked_skill_ids = {l.skill_id for l in likes}
+
     skills = db.query(Skill).join(User).filter(User.society_id == society_id).all()
     result = []
     for s in skills:
@@ -279,6 +296,7 @@ async def get_society_skills(society_id: int, db: Session = Depends(get_db)):
             "email": u.email if u else None,
             "society_id": society_id,
             "society_name": society_name,
+            "is_liked": s.id in liked_skill_ids,
         })
     return result
 
@@ -307,3 +325,52 @@ async def consume_reward(user_id: int, token_type: str, db: Session = Depends(ge
     token.count -= 1
     db.commit()
     return {"status": "success", "remaining": token.count}
+
+# --- Like Endpoints ---
+
+@app.post("/skills/like")
+async def toggle_like(skill_id: int, user_id: int, db: Session = Depends(get_db)):
+    existing = db.query(SkillLike).filter(
+        SkillLike.skill_id == skill_id, SkillLike.user_id == user_id
+    ).first()
+    if existing:
+        db.delete(existing)
+        db.commit()
+        return {"status": "unliked"}
+    like = SkillLike(skill_id=skill_id, user_id=user_id)
+    db.add(like)
+    db.commit()
+    return {"status": "liked"}
+
+# --- Notification Endpoints ---
+
+@app.get("/notifications")
+async def get_notifications(user_id: int, db: Session = Depends(get_db)):
+    user_skills = db.query(Skill).filter(Skill.user_id == user_id).all()
+    skill_ids = [s.id for s in user_skills]
+    if not skill_ids:
+        return []
+
+    likes = db.query(SkillLike).filter(SkillLike.skill_id.in_(skill_ids)).order_by(SkillLike.created_at.desc()).all()
+    result = []
+    for l in likes:
+        skill = db.query(Skill).filter(Skill.id == l.skill_id).first()
+        liker = db.query(User).filter(User.id == l.user_id).first()
+        result.append({
+            "id": l.id,
+            "skill_id": l.skill_id,
+            "skill_title": skill.title if skill else "Unknown",
+            "liked_by_username": liker.username if liker else "Unknown",
+            "liked_by_user_id": l.user_id,
+            "created_at": l.created_at.isoformat() if l.created_at else None,
+        })
+    return result
+
+@app.get("/notifications/count")
+async def get_notification_count(user_id: int, db: Session = Depends(get_db)):
+    user_skills = db.query(Skill).filter(Skill.user_id == user_id).all()
+    skill_ids = [s.id for s in user_skills]
+    if not skill_ids:
+        return {"count": 0}
+    count = db.query(SkillLike).filter(SkillLike.skill_id.in_(skill_ids)).count()
+    return {"count": count}
