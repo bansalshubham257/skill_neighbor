@@ -478,6 +478,7 @@ async def get_received_requests(user_id: int, db: Session = Depends(get_db)):
         }
         if r.status == "accepted" and from_user:
             entry["requester_phone"] = from_user.phone
+            entry["requester_email"] = from_user.email
         result.append(entry)
     return result
 
@@ -489,9 +490,12 @@ async def get_sent_request_details(user_id: int, db: Session = Depends(get_db)):
         skill = db.query(Skill).filter(Skill.id == r.skill_id).first()
         owner = db.query(User).filter(User.id == r.to_user_id).first()
         owner_phone = None
+        owner_email = None
         if r.status == "accepted" and skill:
             if skill.share_phone:
                 owner_phone = skill.phone_number
+            if skill.share_email:
+                owner_email = owner.email if owner else None
         result.append({
             "id": r.id,
             "skill_id": r.skill_id,
@@ -501,6 +505,7 @@ async def get_sent_request_details(user_id: int, db: Session = Depends(get_db)):
             "message": r.message,
             "created_at": r.created_at.isoformat() if r.created_at else None,
             "owner_phone": owner_phone,
+            "owner_email": owner_email,
         })
     return result
 

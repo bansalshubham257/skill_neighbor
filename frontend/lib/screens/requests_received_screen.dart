@@ -100,7 +100,9 @@ class _RequestsReceivedScreenState extends State<RequestsReceivedScreen> {
                             children: [
                               Text(r['message']?.isNotEmpty == true ? r['message'] : 'Status: ${r['status']}'),
                               if (r['requester_phone'] != null)
-                                Text('Contact: ${r['requester_phone']}', style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
+                                Text('Phone: ${r['requester_phone']}', style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
+                              if (r['requester_email'] != null)
+                                Text('Email: ${r['requester_email']}', style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
                             ],
                           ),
                           trailing: isPending

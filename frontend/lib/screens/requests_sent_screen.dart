@@ -53,7 +53,9 @@ class _RequestsSentScreenState extends State<RequestsSentScreen> {
                             children: [
                               Text('Status: ${r['status']}'),
                               if (r['owner_phone'] != null)
-                                Text('Contact: ${r['owner_phone']}', style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
+                                Text('Phone: ${r['owner_phone']}', style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
+                              if (r['owner_email'] != null)
+                                Text('Email: ${r['owner_email']}', style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
                             ],
                           ),
                           trailing: _statusChip(r['status']),
