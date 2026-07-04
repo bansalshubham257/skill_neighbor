@@ -288,12 +288,19 @@ async def join_society(user_id: int, society_id: int, db: Session = Depends(get_
 @app.get("/skills/nearby")
 async def get_nearby_skills(lat: float, lng: float, radius: float = 5.0, current_user_id: int = None, db: Session = Depends(get_db)):
     users = db.query(User).all()
+    print(f"DEBUG: Nearby search from {lat}, {lng}, radius={radius}, all_users={len(users)}")
     nearby_user_ids = []
     for u in users:
         if u.latitude is not None and u.longitude is not None:
             dist = haversine(lat, lng, u.latitude, u.longitude)
             if dist <= radius * 1000:
                 nearby_user_ids.append(u.id)
+            else:
+                print(f"DEBUG: User {u.username} distance too far: {dist}m")
+        else:
+            print(f"DEBUG: User {u.username} has no location")
+
+    print(f"DEBUG: Found {len(nearby_user_ids)} users within radius")
 
     if not nearby_user_ids:
         return []
