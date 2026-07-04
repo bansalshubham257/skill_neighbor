@@ -1,4 +1,4 @@
-package com.example.skill_neighbor
+package com.skillneighbor.app
 
 import io.flutter.embedding.android.FlutterActivity
 
