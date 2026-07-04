@@ -31,26 +31,20 @@ class _SkillListScreenState extends State<SkillListScreen> {
   List<dynamic> filteredSkills = [];
   bool isLoading = true;
   Set<int> likedSkillIds = {};
+  final Box _favBox = Hive.box('bookmarks_box');
   final TextEditingController _searchCtrl = TextEditingController();
 
-  Future<void> _toggleLike(int skillId) async {
-    try {
-      final api = Provider.of<ApiService>(context, listen: false);
-      final result = await api.likeSkill(skillId);
-      setState(() {
-        if (result['status'] == 'liked') {
-          likedSkillIds.add(skillId);
-        } else {
-          likedSkillIds.remove(skillId);
-        }
-      });
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$e')),
-        );
+  Future<void> _toggleLike(dynamic skill) async {
+    final skillId = skill['id'] as int;
+    setState(() {
+      if (likedSkillIds.contains(skillId)) {
+        likedSkillIds.remove(skillId);
+        _favBox.delete(skillId);
+      } else {
+        likedSkillIds.add(skillId);
+        _favBox.put(skillId, skill);
       }
-    }
+    });
   }
 
   double _distance(double lat1, double lng1, double lat2, double lng2) {
@@ -104,10 +98,8 @@ class _SkillListScreenState extends State<SkillListScreen> {
         }
       }
       likedSkillIds.clear();
-      for (final s in skills) {
-        if (s['is_liked'] == true) {
-          likedSkillIds.add(s['id']);
-        }
+      for (final key in _favBox.keys) {
+        likedSkillIds.add(key as int);
       }
       _filter();
     } catch (e) {
@@ -296,12 +288,12 @@ class _SkillListScreenState extends State<SkillListScreen> {
                                         ? Colors.red
                                         : Colors.grey,
                                     size: 20,
+                                    ),
+                                    onPressed: () => _toggleLike(skill),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(
+                                        minWidth: 36, minHeight: 36),
                                   ),
-                                  onPressed: () => _toggleLike(skill['id']),
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(
-                                      minWidth: 36, minHeight: 36),
-                                ),
                                 const Icon(Icons.arrow_forward_ios, size: 16),
                               ],
                             ),

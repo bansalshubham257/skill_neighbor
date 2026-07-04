@@ -3,7 +3,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
 from typing import Optional
 from pydantic import BaseModel
-from models import Base, User, Society, Skill, AdToken, SkillLike, SkillRequest, SkillRating, SCHEMA
+from models import Base, User, Society, Skill, AdToken, SkillRequest, SkillRating, SCHEMA
 from passlib.context import CryptContext
 import os
 import math
@@ -386,20 +386,6 @@ async def consume_reward(user_id: int, token_type: str, db: Session = Depends(ge
 
 # --- Like Endpoints ---
 
-@app.post("/skills/like")
-async def toggle_like(skill_id: int, user_id: int, db: Session = Depends(get_db)):
-    existing = db.query(SkillLike).filter(
-        SkillLike.skill_id == skill_id, SkillLike.user_id == user_id
-    ).first()
-    if existing:
-        db.delete(existing)
-        db.commit()
-        return {"status": "unliked"}
-    like = SkillLike(skill_id=skill_id, user_id=user_id)
-    db.add(like)
-    db.commit()
-    return {"status": "liked"}
-
 # --- Rating Endpoints ---
 
 @app.post("/ratings/add")
@@ -529,33 +515,4 @@ async def respond_request(request_id: int, user_id: int, status: str, db: Sessio
 
 # --- Notification Endpoints ---
 
-@app.get("/notifications")
-async def get_notifications(user_id: int, db: Session = Depends(get_db)):
-    user_skills = db.query(Skill).filter(Skill.user_id == user_id).all()
-    skill_ids = [s.id for s in user_skills]
-    if not skill_ids:
-        return []
-
-    likes = db.query(SkillLike).filter(SkillLike.skill_id.in_(skill_ids)).order_by(SkillLike.created_at.desc()).all()
-    result = []
-    for l in likes:
-        skill = db.query(Skill).filter(Skill.id == l.skill_id).first()
-        liker = db.query(User).filter(User.id == l.user_id).first()
-        result.append({
-            "id": l.id,
-            "skill_id": l.skill_id,
-            "skill_title": skill.title if skill else "Unknown",
-            "liked_by_username": liker.username if liker else "Unknown",
-            "liked_by_user_id": l.user_id,
-            "created_at": l.created_at.isoformat() if l.created_at else None,
-        })
-    return result
-
-@app.get("/notifications/count")
-async def get_notification_count(user_id: int, db: Session = Depends(get_db)):
-    user_skills = db.query(Skill).filter(Skill.user_id == user_id).all()
-    skill_ids = [s.id for s in user_skills]
-    if not skill_ids:
-        return {"count": 0}
-    count = db.query(SkillLike).filter(SkillLike.skill_id.in_(skill_ids)).count()
-    return {"count": count}
+# --- End of Endpoints ---

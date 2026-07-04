@@ -56,14 +56,6 @@ class AdToken(Base):
     count = Column(Integer, default=0)
     last_updated = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
-class SkillLike(Base):
-    __tablename__ = "skill_likes"
-    __table_args__ = {"schema": SCHEMA}
-    id = Column(Integer, primary_key=True, index=True)
-    skill_id = Column(Integer, ForeignKey("skills.id"))
-    user_id = Column(Integer, ForeignKey("users.id"))
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-
 class SkillRequest(Base):
     __tablename__ = "skill_requests"
     __table_args__ = {"schema": SCHEMA}

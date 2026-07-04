@@ -24,24 +24,12 @@ def offset(lat, lng, dist_km, angle_deg):
     return lat + dlat, lng + dlng
 
 societies_data = [
-    ("Indiranagar Heights", 0.5, 0), ("Koramangala Gardens", 0.5, 90),
-    ("MG Road Residency", 0.5, 180), ("Brigade Meadows", 0.5, 270),
-    ("Lavelle View", 0.5, 45), ("Whitefield Estate", 1.2, 135),
-    ("JP Nagar Towers", 1.2, 225), ("Malleshwaram Enclave", 1.2, 315),
-    ("Electronic City Phase 1", 1.8, 180), ("Hebbal Lake View", 1.8, 0),
+    ("Indiranagar Heights", 0.5, 0),
+    ("Koramangala Gardens", 0.5, 90),
 ]
 
 users_data = [
-    ("admin","admin","admin@test.com","Math Tutoring","Expert math tutor for grades 1-10","Tutoring",500,"+919000000001"),
-    ("user2","user2","user2@test.com","Yoga & Fitness","Certified yoga instructor","Fitness",400,"+919000000002"),
-    ("user3","user3","user3@test.com","Piano Lessons","Grade 8 pianist","Music",600,"+919000000003"),
-    ("user4","user4","user4@test.com","Cooking Classes","Italian & Indian cuisine","Cooking",350,"+919000000004"),
-    ("user5","user5","user5@test.com","Plumbing Services","10 years experience","Plumbing",300,"+919000000005"),
-    ("user6","user6","user6@test.com","Electrical Repairs","Licensed electrician","Electrical",350,"+919000000006"),
-    ("user7","user7","user7@test.com","Photography","Event & portrait","Photography",800,"+919000000007"),
-    ("user8","user8","user8@test.com","Gardening","Landscaping & plant care","Gardening",250,"+919000000008"),
-    ("user9","user9","user9@test.com","Pet Grooming","Dogs & cats grooming","Pet Care",300,"+919000000009"),
-    ("user10","user10","user10@test.com","Web Development","Full-stack dev","IT Support",1000,"+919000000010"),
+    ("admin","admin","admin@test.com","Math Tutoring","Expert math tutor","Tutoring",500,"+919000000001"),
     ("shubham","shubham","shubham@test.com","Carpentry","Custom furniture & repair","Carpentry",450,"+919000000011"),
 ]
 
