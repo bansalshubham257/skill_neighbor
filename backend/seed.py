@@ -5,30 +5,9 @@ Run: DATABASE_URL="..." python3 seed.py
 """
 import os, math, sys
 
-DATABASE_URL = os.getenv("DATABASE_URL")
-if not DATABASE_URL:
-    print("Set DATABASE_URL env var"); sys.exit(1)
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Base, User, Society, Skill, AdToken
-
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(bind=engine)
-Base.metadata.drop_all(bind=engine)
-Base.metadata.create_all(bind=engine)
-db = SessionLocal()
-
-# Clear existing data
-db.query(AdToken).delete()
-db.query(Skill).delete()
-admin = db.query(User).filter(User.username == "admin").first()
-if admin:
-    admin.society_id = None
-    db.commit()
-db.query(User).filter(User.username != "admin").delete()
-db.query(Society).delete()
-db.commit()
+from models import Base, User, Society, Skill, AdToken, SkillLike
 
 clat, clng = 12.9655, 77.7092
 
@@ -60,42 +39,70 @@ users_data = [
     ("shubham","shubham","shubham@test.com","Carpentry","Custom furniture & repair","Carpentry",450,"+919000000011"),
 ]
 
-created_societies = []
-for i, (name, dist, angle) in enumerate(societies_data):
-    lat, lng = offset(clat, clng, dist, angle)
-    society = Society(name=name, latitude=lat, longitude=lng)
-    db.add(society); db.commit(); db.refresh(society)
-    created_societies.append(society)
-    print(f"  Society: {name} ({dist}km, {angle}°)")
+def seed_all(db):
+    """Seed all data into the database using an existing session."""
 
-print("")
-for i, (uname, pwd, email, stitle, sdesc, cat, rate, phone) in enumerate(users_data):
-    if uname == "shubham":
-        # shubham has no society - forced to choose on first login
+    # Clear existing data
+    db.query(SkillLike).delete()
+    db.query(AdToken).delete()
+    db.query(Skill).delete()
+    admin = db.query(User).filter(User.username == "admin").first()
+    if admin:
+        admin.society_id = None
+        db.commit()
+    db.query(User).filter(User.username != "admin").delete()
+    db.query(Society).delete()
+    db.commit()
+
+    created_societies = []
+    for i, (name, dist, angle) in enumerate(societies_data):
+        lat, lng = offset(clat, clng, dist, angle)
+        society = Society(name=name, latitude=lat, longitude=lng)
+        db.add(society); db.commit(); db.refresh(society)
+        created_societies.append(society)
+        print(f"  Society: {name} ({dist}km, {angle}°)")
+
+    print("")
+    for i, (uname, pwd, email, stitle, sdesc, cat, rate, phone) in enumerate(users_data):
+        if uname == "shubham":
+            user = db.query(User).filter(User.username == uname).first()
+            if not user:
+                user = User(username=uname, password=pwd, email=email, latitude=clat, longitude=clng)
+                db.add(user); db.commit(); db.refresh(user)
+            db.add(Skill(user_id=user.id, title=stitle, description=sdesc, category=cat, price_type="Fixed", hourly_rate=rate, phone_number=phone))
+            for tt in ["CONTACT", "CHAT", "BOOKMARK"]:
+                db.add(AdToken(user_id=user.id, token_type=tt, count=5))
+            db.commit()
+            print(f"  User: {uname} -> {stitle} (no society)")
+            continue
+
+        slat, slng = offset(clat, clng, societies_data[i][1], societies_data[i][2])
         user = db.query(User).filter(User.username == uname).first()
         if not user:
-            user = User(username=uname, password=pwd, email=email, latitude=clat, longitude=clng)
+            user = User(username=uname, password=pwd, email=email, latitude=slat, longitude=slng, society_id=created_societies[i].id)
             db.add(user); db.commit(); db.refresh(user)
+        else:
+            user.latitude = slat; user.longitude = slng; user.society_id = created_societies[i].id; db.commit()
+
         db.add(Skill(user_id=user.id, title=stitle, description=sdesc, category=cat, price_type="Fixed", hourly_rate=rate, phone_number=phone))
         for tt in ["CONTACT", "CHAT", "BOOKMARK"]:
             db.add(AdToken(user_id=user.id, token_type=tt, count=5))
         db.commit()
-        print(f"  User: {uname} -> {stitle} (no society)")
-        continue
+        print(f"  User: {uname} -> {stitle} in {created_societies[i].name}")
 
-    slat, slng = offset(clat, clng, societies_data[i][1], societies_data[i][2])
-    user = db.query(User).filter(User.username == uname).first()
-    if not user:
-        user = User(username=uname, password=pwd, email=email, latitude=slat, longitude=slng, society_id=created_societies[i].id)
-        db.add(user); db.commit(); db.refresh(user)
-    else:
-        user.latitude = slat; user.longitude = slng; user.society_id = created_societies[i].id; db.commit()
+    print("\nSeed complete!")
 
-    db.add(Skill(user_id=user.id, title=stitle, description=sdesc, category=cat, price_type="Fixed", hourly_rate=rate, phone_number=phone))
-    for tt in ["CONTACT", "CHAT", "BOOKMARK"]:
-        db.add(AdToken(user_id=user.id, token_type=tt, count=5))
-    db.commit()
-    print(f"  User: {uname} -> {stitle} in {created_societies[i].name}")
 
-db.close()
-print("\nSeed complete!")
+if __name__ == "__main__":
+    DATABASE_URL = os.getenv("DATABASE_URL")
+    if not DATABASE_URL:
+        print("Set DATABASE_URL env var"); sys.exit(1)
+    engine = create_engine(DATABASE_URL)
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    SessionLocal = sessionmaker(bind=engine)
+    db = SessionLocal()
+    try:
+        seed_all(db)
+    finally:
+        db.close()
