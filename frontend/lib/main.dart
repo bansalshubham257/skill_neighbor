@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'services/api_service.dart';
+import 'services/settings_service.dart';
 import 'screens/auth_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/add_society_screen.dart';
+import 'screens/choose_society_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,8 +20,11 @@ void main() async {
   final isLoggedIn = box.get('user_id') != null;
 
   runApp(
-    Provider(
-      create: (_) => ApiService(),
+    MultiProvider(
+      providers: [
+        Provider(create: (_) => ApiService()),
+        ChangeNotifierProvider(create: (_) => SettingsService()),
+      ],
       child: SkillNeighborApp(isLoggedIn: isLoggedIn),
     ),
   );
@@ -31,9 +36,13 @@ class SkillNeighborApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsService>();
+    final lang = settings.language;
+
     return MaterialApp(
       title: 'SkillNeighbor',
       debugShowCheckedModeBanner: false,
+      themeMode: settings.themeMode,
       theme: ThemeData(
         primarySwatch: Colors.orange,
         scaffoldBackgroundColor: const Color(0xFFF5F5F5),
@@ -43,12 +52,26 @@ class SkillNeighborApp extends StatelessWidget {
           elevation: 0,
         ),
         useMaterial3: true,
+        brightness: Brightness.light,
       ),
+      darkTheme: ThemeData(
+        primarySwatch: Colors.orange,
+        scaffoldBackgroundColor: const Color(0xFF121212),
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.orange.shade800,
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
+        useMaterial3: true,
+        brightness: Brightness.dark,
+      ),
+      locale: lang == 'hi' ? const Locale('hi') : const Locale('en'),
       initialRoute: isLoggedIn ? '/home' : '/login',
       routes: {
         '/login': (_) => const AuthScreen(),
         '/home': (_) => const HomeScreen(),
         '/add-society': (_) => const AddSocietyScreen(),
+        '/choose-society': (_) => const ChooseSocietyScreen(),
       },
     );
   }

@@ -130,6 +130,42 @@ async def create_skill(user_id: int, data: SkillCreate, db: Session = Depends(ge
     db.refresh(skill)
     return {"status": "success", "skill_id": skill.id}
 
+@app.get("/skills/my")
+async def get_my_skills(user_id: int, db: Session = Depends(get_db)):
+    skills = db.query(Skill).filter(Skill.user_id == user_id).all()
+    result = []
+    for s in skills:
+        result.append({
+            "id": s.id,
+            "user_id": s.user_id,
+            "category": s.category,
+            "title": s.title,
+            "description": s.description,
+            "price_type": s.price_type,
+            "hourly_rate": s.hourly_rate,
+            "phone_number": s.phone_number,
+        })
+    return result
+
+@app.put("/skills/update")
+async def update_skill(skill_id: int, user_id: int, data: SkillCreate, db: Session = Depends(get_db)):
+    skill = db.query(Skill).filter(Skill.id == skill_id, Skill.user_id == user_id).first()
+    if not skill:
+        raise HTTPException(status_code=404, detail="Skill not found or not yours")
+    for key, val in data.model_dump().items():
+        setattr(skill, key, val)
+    db.commit()
+    return {"status": "success", "skill_id": skill.id}
+
+@app.delete("/skills/delete")
+async def delete_skill(skill_id: int, user_id: int, db: Session = Depends(get_db)):
+    skill = db.query(Skill).filter(Skill.id == skill_id, Skill.user_id == user_id).first()
+    if not skill:
+        raise HTTPException(status_code=404, detail="Skill not found or not yours")
+    db.delete(skill)
+    db.commit()
+    return {"status": "success", "message": "Skill deleted"}
+
 # --- Society Endpoints ---
 
 def check_society_change_limit(user):

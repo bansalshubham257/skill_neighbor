@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
 import '../services/api_service.dart';
+import '../services/settings_service.dart';
 import 'add_skill_screen.dart';
+import 'my_skills_screen.dart';
+import 'settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -44,6 +47,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsService>();
+    final lang = settings.language;
     final api = Provider.of<ApiService>(context);
     final userId = api.userId;
     final box = Hive.box('user_box');
@@ -52,7 +57,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final societyName = box.get('society_name');
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
+      appBar: AppBar(title: Text(AppStrings.get('profile', lang: lang))),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -68,9 +73,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Text('$email',
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: Colors.grey)),
-          Text('User ID: $userId',
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.grey)),
           if (societyName != null)
             Padding(
               padding: const EdgeInsets.only(top: 4),
@@ -81,10 +83,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 32),
           ListTile(
             leading: const Icon(Icons.add_circle_outline),
-            title: const Text('Add a Skill'),
+            title: Text(AppStrings.get('add_skill', lang: lang)),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () => Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const AddSkillScreen())),
+          ),
+          ListTile(
+            leading: const Icon(Icons.list_alt),
+            title: Text(AppStrings.get('my_skills', lang: lang)),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const MySkillsScreen())),
           ),
           ListTile(
             leading: const Icon(Icons.add_home_outlined),
@@ -96,10 +105,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ListTile(
               leading: _isLeaving
                   ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
+                      width: 24, height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.exit_to_app, color: Colors.red),
               title: Text('Leave $societyName',
                   style: const TextStyle(color: Colors.red)),
@@ -107,8 +114,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           const Divider(),
           ListTile(
+            leading: const Icon(Icons.settings),
+            title: Text(AppStrings.get('settings', lang: lang)),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const SettingsScreen())),
+          ),
+          ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
-            title: const Text('Logout', style: TextStyle(color: Colors.red)),
+            title: Text(AppStrings.get('logout', lang: lang),
+                style: const TextStyle(color: Colors.red)),
             onTap: () => _logout(context),
           ),
         ],

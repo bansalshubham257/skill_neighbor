@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hive/hive.dart';
+import 'package:provider/provider.dart';
+import '../services/settings_service.dart';
 import 'skill_list_screen.dart';
 import 'add_skill_screen.dart';
 import 'profile_screen.dart';
@@ -65,10 +67,10 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (i) => setState(() => _currentIndex = i),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.explore), label: 'Explore'),
-          NavigationDestination(icon: Icon(Icons.add_circle), label: 'Add Skill'),
-          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
+        destinations: [
+          NavigationDestination(icon: const Icon(Icons.explore), label: AppStrings.get('explore', lang: context.watch<SettingsService>().language)),
+          NavigationDestination(icon: const Icon(Icons.add_circle), label: AppStrings.get('add_skill', lang: context.watch<SettingsService>().language)),
+          NavigationDestination(icon: const Icon(Icons.person), label: AppStrings.get('profile', lang: context.watch<SettingsService>().language)),
         ],
       ),
     );
@@ -80,15 +82,15 @@ class _HomeScreenState extends State<HomeScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           child: SegmentedButton<bool>(
-            segments: const [
+            segments: [
               ButtonSegment(
                   value: true,
-                  label: Text('Explore Nearby'),
-                  icon: Icon(Icons.map)),
+                  label: Text(AppStrings.get('nearby', lang: context.watch<SettingsService>().language)),
+                  icon: const Icon(Icons.map)),
               ButtonSegment(
                   value: false,
-                  label: Text('My Society'),
-                  icon: Icon(Icons.home)),
+                  label: Text(AppStrings.get('my_society', lang: context.watch<SettingsService>().language)),
+                  icon: const Icon(Icons.home)),
             ],
             selected: {showNearby},
             onSelectionChanged: (val) {

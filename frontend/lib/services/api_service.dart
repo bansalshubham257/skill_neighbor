@@ -96,6 +96,46 @@ class ApiService {
   }
 
   // Search
+  Future<List<dynamic>> fetchMySkills() async {
+    final uid = userId;
+    if (uid == null) throw Exception("Not logged in");
+    final response = await _dio.get('/skills/my', queryParameters: {'user_id': uid});
+    return response.data;
+  }
+
+  Future<Map<String, dynamic>> updateSkill(int skillId, {
+    required String title,
+    required String description,
+    required String category,
+    required String priceType,
+    double? hourlyRate,
+    required String phoneNumber,
+  }) async {
+    final uid = userId;
+    if (uid == null) throw Exception("Not logged in");
+    final response = await _dio.put('/skills/update', queryParameters: {
+      'skill_id': skillId,
+      'user_id': uid,
+    }, data: {
+      'title': title,
+      'description': description,
+      'category': category,
+      'price_type': priceType,
+      'hourly_rate': hourlyRate,
+      'phone_number': phoneNumber,
+    });
+    return response.data;
+  }
+
+  Future<void> deleteSkill(int skillId) async {
+    final uid = userId;
+    if (uid == null) throw Exception("Not logged in");
+    await _dio.delete('/skills/delete', queryParameters: {
+      'skill_id': skillId,
+      'user_id': uid,
+    });
+  }
+
   Future<List<dynamic>> fetchNearbySkills(
       double lat, double lng, double radius) async {
     final response = await _dio.get('/skills/nearby', queryParameters: {

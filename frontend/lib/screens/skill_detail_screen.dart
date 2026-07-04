@@ -17,14 +17,10 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
   Future<void> unlockPhone() async {
     setState(() => isWatchingAd = true);
     final api = Provider.of<ApiService>(context, listen: false);
-    
+
     try {
-      // Step 1: Claim token via ad simulation
       await api.claimReward('CONTACT');
-      
-      // Step 2: Consume token to unlock
       bool success = await api.consumeReward('CONTACT');
-      
       if (success) {
         setState(() => phoneUnlocked = true);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -42,23 +38,56 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final skill = widget.skill;
+    final societyName = skill['society_name'];
+
     return Scaffold(
-      appBar: AppBar(title: Text(widget.skill['title'])),
-      body: Padding(
+      appBar: AppBar(title: Text(skill['title'])),
+      body: ListView(
         padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(widget.skill['category'], style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            Text(widget.skill['description'], style: const TextStyle(fontSize: 16)),
-            const SizedBox(height: 20),
-            Text("Price: ${widget.skill['hourly_rate'] ?? 'Negotiable'} / hr", 
-                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 40),
-            
-            Center(
-              child: isWatchingAd 
+        children: [
+          Text(skill['category'],
+              style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
+          Text(skill['description'], style: const TextStyle(fontSize: 16)),
+          const SizedBox(height: 12),
+          if (societyName != null)
+            Row(
+              children: [
+                Icon(Icons.groups, size: 16, color: Colors.grey.shade600),
+                const SizedBox(width: 4),
+                Text(societyName,
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
+              ],
+            ),
+          const SizedBox(height: 20),
+          Text("Price: ${skill['hourly_rate'] ?? 'Negotiable'} / hr",
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 40),
+
+          // Disclaimer card
+          Card(
+            color: Colors.amber.shade50,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  Icon(Icons.warning_amber, color: Colors.amber.shade800, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'We do not verify any person. Please use your own judgment before booking or sharing contact.',
+                      style: TextStyle(fontSize: 12, color: Colors.amber.shade900),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          Center(
+            child: isWatchingAd
                 ? const CircularProgressIndicator()
                 : ElevatedButton.icon(
                     onPressed: phoneUnlocked ? null : unlockPhone,
@@ -70,20 +99,19 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                     ),
                   ),
-            ),
-            
-            if (phoneUnlocked)
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 20),
-                  child: Text(
-                    widget.skill['phone_number'],
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                  ),
+          ),
+
+          if (phoneUnlocked)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 20),
+                child: Text(
+                  skill['phone_number'],
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }

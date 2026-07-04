@@ -3,6 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
 import '../services/api_service.dart';
+import '../services/settings_service.dart';
 import 'skill_detail_screen.dart';
 
 class SkillListScreen extends StatefulWidget {
@@ -102,8 +103,8 @@ class _SkillListScreenState extends State<SkillListScreen> {
                   ? Center(
                       child: Text(
                         widget.isNearby
-                            ? 'No skills found nearby.'
-                            : 'No skills in your society yet.\nAdd one from the Profile tab!',
+                            ? AppStrings.get('no_skills_nearby', lang: context.read<SettingsService>().language)
+                            : '${AppStrings.get('no_skills_society', lang: context.read<SettingsService>().language)}\nAdd one from the Profile tab!',
                         textAlign: TextAlign.center,
                         style: const TextStyle(color: Colors.grey),
                       ),

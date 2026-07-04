@@ -47,7 +47,11 @@ class _AuthScreenState extends State<AuthScreen> {
       }
 
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/home');
+        if (result['society_id'] != null) {
+          Navigator.pushReplacementNamed(context, '/home');
+        } else {
+          Navigator.pushReplacementNamed(context, '/choose-society');
+        }
       }
     } on DioException catch (e) {
       if (mounted) {

@@ -6,7 +6,9 @@ import '../services/api_service.dart';
 
 class AddSkillScreen extends StatefulWidget {
   final VoidCallback? onSkillAdded;
-  const AddSkillScreen({super.key, this.onSkillAdded});
+  final dynamic existingSkill;
+
+  const AddSkillScreen({super.key, this.onSkillAdded, this.existingSkill});
 
   @override
   State<AddSkillScreen> createState() => _AddSkillScreenState();
@@ -22,10 +24,7 @@ class _AddSkillScreenState extends State<AddSkillScreen> {
   String _category = 'Tutoring';
   String _priceType = 'Negotiable';
   bool _isSubmitting = false;
-
-  List<dynamic> _societies = [];
-  int? _selectedSocietyId;
-  bool _loadingSocieties = true;
+  bool get _isEditing => widget.existingSkill != null;
 
   final List<String> _categories = [
     'Tutoring', 'Fitness', 'Music', 'Cooking', 'Plumbing',
@@ -36,21 +35,14 @@ class _AddSkillScreenState extends State<AddSkillScreen> {
   @override
   void initState() {
     super.initState();
-    final box = Hive.box('user_box');
-    _selectedSocietyId = box.get('society_id');
-    _loadSocieties();
-  }
-
-  Future<void> _loadSocieties() async {
-    try {
-      final api = Provider.of<ApiService>(context, listen: false);
-      final list = await api.fetchSocieties();
-      if (mounted) setState(() {
-        _societies = list;
-        _loadingSocieties = false;
-      });
-    } catch (_) {
-      if (mounted) setState(() => _loadingSocieties = false);
+    if (widget.existingSkill != null) {
+      final s = widget.existingSkill;
+      _titleCtl.text = s['title'] ?? '';
+      _descCtl.text = s['description'] ?? '';
+      _phoneCtl.text = s['phone_number'] ?? '';
+      _rateCtl.text = s['hourly_rate']?.toString() ?? '';
+      _category = s['category'] ?? 'Tutoring';
+      _priceType = s['price_type'] ?? 'Negotiable';
     }
   }
 
@@ -70,31 +62,42 @@ class _AddSkillScreenState extends State<AddSkillScreen> {
     try {
       final api = Provider.of<ApiService>(context, listen: false);
 
-      if (_selectedSocietyId == null) {
+      if (_isEditing) {
+        await api.updateSkill(
+          widget.existingSkill['id'],
+          title: _titleCtl.text.trim(),
+          description: _descCtl.text.trim(),
+          category: _category,
+          priceType: _priceType,
+          hourlyRate: _priceType == 'Fixed'
+              ? double.tryParse(_rateCtl.text.trim())
+              : null,
+          phoneNumber: _phoneCtl.text.trim(),
+        );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please select or join a society first')),
+            const SnackBar(content: Text('Skill updated!')),
           );
         }
-        setState(() => _isSubmitting = false);
-        return;
+      } else {
+        await api.createSkill(
+          title: _titleCtl.text.trim(),
+          description: _descCtl.text.trim(),
+          category: _category,
+          priceType: _priceType,
+          hourlyRate: _priceType == 'Fixed'
+              ? double.tryParse(_rateCtl.text.trim())
+              : null,
+          phoneNumber: _phoneCtl.text.trim(),
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Skill published!')),
+          );
+        }
       }
 
-      await api.createSkill(
-        title: _titleCtl.text.trim(),
-        description: _descCtl.text.trim(),
-        category: _category,
-        priceType: _priceType,
-        hourlyRate: _priceType == 'Fixed'
-            ? double.tryParse(_rateCtl.text.trim())
-            : null,
-        phoneNumber: _phoneCtl.text.trim(),
-      );
-
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Skill published!')),
-        );
         setState(() {
           _titleCtl.clear();
           _descCtl.clear();
@@ -102,6 +105,7 @@ class _AddSkillScreenState extends State<AddSkillScreen> {
           _rateCtl.clear();
         });
         widget.onSkillAdded?.call();
+        if (_isEditing) Navigator.pop(context);
       }
     } on DioException catch (e) {
       if (mounted) {
@@ -123,51 +127,23 @@ class _AddSkillScreenState extends State<AddSkillScreen> {
   @override
   Widget build(BuildContext context) {
     final box = Hive.box('user_box');
-    final currentSocietyName = box.get('society_name');
+    final societyName = box.get('society_name', defaultValue: '');
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Add a Skill')),
+      appBar: AppBar(title: Text(_isEditing ? 'Edit Skill' : 'Add a Skill')),
       body: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            if (_loadingSocieties)
-              const LinearProgressIndicator()
-            else ...[
-              if (currentSocietyName != null) ...[
-                Card(
-                  color: Colors.orange.shade50,
-                  child: ListTile(
-                    leading: const Icon(Icons.home, color: Colors.orange),
-                    title: Text('Your Society: $currentSocietyName'),
-                    subtitle: const Text('Skills will be listed under this society'),
-                    trailing: const Icon(Icons.check_circle, color: Colors.green),
-                  ),
-                ),
-              ] else ...[
-                DropdownButtonFormField<int>(
-                  value: _selectedSocietyId,
-                  decoration: const InputDecoration(
-                    labelText: 'Choose a Society *',
-                    prefixIcon: Icon(Icons.groups),
-                  ),
-                  hint: const Text('Select your society'),
-                  items: _societies.map((s) => DropdownMenuItem<int>(
-                    value: s['id'] as int,
-                    child: Text(s['name'] as String),
-                  )).toList(),
-                  onChanged: (v) => setState(() => _selectedSocietyId = v),
-                  validator: (v) => v == null ? 'Select a society' : null,
-                ),
-                const SizedBox(height: 8),
-                TextButton.icon(
-                  onPressed: () => Navigator.pushNamed(context, '/add-society'),
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text("Can't find yours? Create a new society"),
-                ),
-              ],
-            ],
+            Card(
+              color: Colors.orange.shade50,
+              child: ListTile(
+                leading: const Icon(Icons.home, color: Colors.orange),
+                title: Text('Society: $societyName'),
+                trailing: const Icon(Icons.check_circle, color: Colors.green),
+              ),
+            ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               value: _category,
@@ -226,7 +202,10 @@ class _AddSkillScreenState extends State<AddSkillScreen> {
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    child: const Text('Publish Skill', style: TextStyle(fontSize: 18)),
+                    child: Text(
+                      _isEditing ? 'Update Skill' : 'Publish Skill',
+                      style: const TextStyle(fontSize: 18),
+                    ),
                   ),
           ],
         ),
