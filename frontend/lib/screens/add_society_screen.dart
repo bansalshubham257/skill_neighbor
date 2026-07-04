@@ -13,7 +13,6 @@ class AddSocietyScreen extends StatefulWidget {
 }
 
 class _AddSocietyScreenState extends State<AddSocietyScreen> {
-  final _nameCtl = TextEditingController();
   final _searchCtl = TextEditingController();
   bool _isSubmitting = false;
   List<dynamic> _societies = [];
@@ -28,7 +27,6 @@ class _AddSocietyScreenState extends State<AddSocietyScreen> {
 
   @override
   void dispose() {
-    _nameCtl.dispose();
     _searchCtl.dispose();
     super.dispose();
   }
@@ -85,10 +83,7 @@ class _AddSocietyScreenState extends State<AddSocietyScreen> {
     }
   }
 
-  Future<void> _createSociety() async {
-    final name = _nameCtl.text.trim();
-    if (name.isEmpty) return;
-
+  Future<void> _createSociety(String name) async {
     setState(() => _isSubmitting = true);
     try {
       LocationPermission permission = await Geolocator.requestPermission();
@@ -103,11 +98,7 @@ class _AddSocietyScreenState extends State<AddSocietyScreen> {
       }
       final pos = await Geolocator.getCurrentPosition();
       final api = Provider.of<ApiService>(context, listen: false);
-      final result = await api.createSociety(
-        name: name,
-        lat: pos.latitude,
-        lng: pos.longitude,
-      );
+      final result = await api.createSociety(name: name, lat: pos.latitude, lng: pos.longitude);
 
       final box = Hive.box('user_box');
       box.put('society_id', result['society_id']);
@@ -122,7 +113,7 @@ class _AddSocietyScreenState extends State<AddSocietyScreen> {
     } on DioException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.response?.data ?? e.message}')),
+          SnackBar(content: Text('${e.response?.data ?? e.message}')),
         );
       }
     } catch (e) {
@@ -138,34 +129,30 @@ class _AddSocietyScreenState extends State<AddSocietyScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final q = _searchCtl.text.trim();
+    final exactMatch = q.isNotEmpty && _filtered.any((s) =>
+      (s['name'] as String).toLowerCase() == q.toLowerCase()
+    );
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Create / Join Society')),
+      appBar: AppBar(title: const Text('Join / Create Society')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
-            'Join an existing society or create a new one.',
-            style: TextStyle(fontSize: 14, color: Colors.grey),
-          ),
-          const SizedBox(height: 16),
           TextField(
             controller: _searchCtl,
+            autofocus: true,
             decoration: InputDecoration(
-              hintText: 'Search nearby societies...',
+              hintText: 'Search or type a society name...',
               prefixIcon: const Icon(Icons.search),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
             onChanged: _filter,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           if (_loading)
             const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator()))
-          else if (_filtered.isEmpty)
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Text('No societies found. Create one below!', style: TextStyle(color: Colors.grey.shade600)),
-            )
-          else
+          else if (_filtered.isNotEmpty)
             ...List.generate(_filtered.length, (i) {
               final s = _filtered[i];
               return Card(
@@ -180,33 +167,30 @@ class _AddSocietyScreenState extends State<AddSocietyScreen> {
                 ),
               );
             }),
-          const Divider(height: 32),
-          const Text(
-            'Create a new society for your apartment complex or neighborhood.',
-            style: TextStyle(fontSize: 14, color: Colors.grey),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _nameCtl,
-            decoration: const InputDecoration(
-              labelText: 'Society / Community Name',
-              border: OutlineInputBorder(),
+          if (_filtered.isEmpty && q.isNotEmpty && !_loading)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Column(
+                children: [
+                  Icon(Icons.search_off, size: 48, color: Colors.grey.shade400),
+                  const SizedBox(height: 8),
+                  Text('No society named "$q" found.',
+                      style: TextStyle(color: Colors.grey.shade600)),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _isSubmitting ? null : () => _createSociety(q),
+                      icon: const Icon(Icons.add_home),
+                      label: const Text('Create this society'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _isSubmitting ? null : _createSociety,
-              style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-              child: const Text('Create Society', style: TextStyle(fontSize: 18)),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Note: Your current location will be used as the society center.',
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-          ),
         ],
       ),
     );
