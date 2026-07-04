@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
 import '../services/api_service.dart';
 import 'add_skill_screen.dart';
@@ -8,8 +7,7 @@ import 'add_skill_screen.dart';
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
-  void _logout(BuildContext context) async {
-    await GoogleSignIn().signOut();
+  void _logout(BuildContext context) {
     Hive.box('user_box').clear();
     Navigator.pushReplacementNamed(context, '/login');
   }
@@ -19,7 +17,9 @@ class ProfileScreen extends StatelessWidget {
     final api = Provider.of<ApiService>(context);
     final userId = api.userId;
     final box = Hive.box('user_box');
-    final email = box.get('email', defaultValue: 'Not set');
+    final email = box.get('email', defaultValue: '');
+    final username = box.get('username', defaultValue: 'User');
+    final societyName = box.get('society_name');
 
     return Scaffold(
       appBar: AppBar(title: const Text('Profile')),
@@ -28,15 +28,26 @@ class ProfileScreen extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 40,
-            child: Text(email.toString()[0].toUpperCase()),
+            child: Text(username.toString()[0].toUpperCase()),
           ),
           const SizedBox(height: 16),
+          Text('@$username',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          if (email != null && email.toString().isNotEmpty)
+            Text('$email',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.grey)),
           Text('User ID: $userId',
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16)),
-          Text('Email: $email',
-              textAlign: TextAlign.center,
               style: const TextStyle(color: Colors.grey)),
+          if (societyName != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text('Society: $societyName',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.orange)),
+            ),
           const SizedBox(height: 32),
           ListTile(
             leading: const Icon(Icons.add_circle_outline),

@@ -97,9 +97,15 @@ class _SkillListScreenState extends State<SkillListScreen> {
           child: isLoading
               ? const Center(child: CircularProgressIndicator())
               : skills.isEmpty
-                  ? const Center(
-                      child: Text('No skills found nearby.',
-                          style: TextStyle(color: Colors.grey)))
+                  ? Center(
+                      child: Text(
+                        widget.isNearby
+                            ? 'No skills found nearby.'
+                            : 'No skills in your society yet.\nAdd one from the Profile tab!',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.grey),
+                      ),
+                    )
                   : ListView.builder(
                       itemCount: skills.length,
                       itemBuilder: (context, index) {

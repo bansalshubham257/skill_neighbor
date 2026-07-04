@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
 import 'package:dio/dio.dart';
 import '../services/api_service.dart';
@@ -29,11 +30,15 @@ class _AddSocietyScreenState extends State<AddSocietyScreen> {
     try {
       final pos = await Geolocator.getCurrentPosition();
       final api = Provider.of<ApiService>(context, listen: false);
-      await api.createSociety(
+      final result = await api.createSociety(
         name: name,
         lat: pos.latitude,
         lng: pos.longitude,
       );
+
+      final box = Hive.box('user_box');
+      box.put('society_id', result['society_id']);
+      box.put('society_name', result['name']);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

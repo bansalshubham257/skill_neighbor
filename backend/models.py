@@ -7,7 +7,8 @@ Base = declarative_base()
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
-    google_id = Column(String, unique=True, index=True)
+    username = Column(String, unique=True, index=True)
+    password = Column(String)
     email = Column(String, unique=True, index=True)
     latitude = Column(Float)
     longitude = Column(Float)

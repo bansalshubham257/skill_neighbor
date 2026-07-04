@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from typing import Optional
 from pydantic import BaseModel
@@ -22,15 +22,39 @@ def get_db():
 
 Base.metadata.create_all(bind=engine)
 
+# Seed test user
+def seed_test_user():
+    db = SessionLocal()
+    try:
+        existing = db.query(User).filter(User.username == "admin").first()
+        if not existing:
+            user = User(
+                username="admin",
+                password="admin",
+                email="admin@test.com",
+                latitude=12.9716,
+                longitude=77.5946,
+            )
+            db.add(user)
+            db.commit()
+    finally:
+        db.close()
+
+seed_test_user()
+
 app = FastAPI()
 
 # --- Schemas ---
-class UserCreate(BaseModel):
-    google_id: str
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+class RegisterRequest(BaseModel):
+    username: str
+    password: str
     email: str
     lat: float
     lng: float
-    society_id: Optional[int] = None
 
 class SkillCreate(BaseModel):
     title: str
@@ -54,28 +78,48 @@ def haversine(lat1, lng1, lat2, lng2):
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     return R * c
 
-# --- Endpoints ---
+# --- Auth Endpoints ---
+
+@app.post("/auth/login")
+async def login(data: LoginRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.username == data.username, User.password == data.password).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    return {
+        "status": "success",
+        "user_id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "society_id": user.society_id,
+    }
+
+@app.post("/auth/register")
+async def register(data: RegisterRequest, db: Session = Depends(get_db)):
+    existing = db.query(User).filter(
+        (User.username == data.username) | (User.email == data.email)
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Username or email already exists")
+    user = User(
+        username=data.username,
+        password=data.password,
+        email=data.email,
+        latitude=data.lat,
+        longitude=data.lng,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return {"status": "success", "user_id": user.id}
+
+# --- User Endpoints ---
 
 @app.post("/users/sync")
-async def sync_user(data: UserCreate, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.google_id == data.google_id).first()
-    if not user:
-        user = User(
-            google_id=data.google_id,
-            email=data.email,
-            latitude=data.lat,
-            longitude=data.lng,
-            society_id=data.society_id,
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-    else:
-        user.latitude = data.lat
-        user.longitude = data.lng
-        user.society_id = data.society_id
-        db.commit()
-    return {"status": "success", "user_id": user.id}
+async def sync_user(data: LoginRequest, db: Session = Depends(get_db)):
+    # Kept for backward compatibility
+    return await login(data, db)
+
+# --- Skill Endpoints ---
 
 @app.post("/skills/create")
 async def create_skill(user_id: int, data: SkillCreate, db: Session = Depends(get_db)):
@@ -84,6 +128,8 @@ async def create_skill(user_id: int, data: SkillCreate, db: Session = Depends(ge
     db.commit()
     db.refresh(skill)
     return {"status": "success", "skill_id": skill.id}
+
+# --- Society Endpoints ---
 
 @app.post("/societies/create")
 async def create_society(user_id: int, data: SocietyCreate, db: Session = Depends(get_db)):
@@ -98,6 +144,8 @@ async def create_society(user_id: int, data: SocietyCreate, db: Session = Depend
         db.commit()
 
     return {"status": "success", "society_id": society.id, "name": society.name}
+
+# --- Search Endpoints ---
 
 @app.get("/skills/nearby")
 async def get_nearby_skills(lat: float, lng: float, radius: float = 5.0, db: Session = Depends(get_db)):
@@ -147,6 +195,8 @@ async def get_society_skills(society_id: int, db: Session = Depends(get_db)):
             "email": u.email if u else None,
         })
     return result
+
+# --- Reward Endpoints ---
 
 @app.post("/rewards/claim")
 async def claim_reward(user_id: int, token_type: str, db: Session = Depends(get_db)):
