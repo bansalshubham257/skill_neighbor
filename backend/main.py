@@ -304,7 +304,7 @@ async def get_nearby_skills(lat: float, lng: float, radius: float = 5.0, current
              "share_phone": s.share_phone,
              "share_email": s.share_email,
          })
-     return result
+    return result
 
 @app.get("/skills/society/{society_id}")
 async def get_society_skills(society_id: int, current_user_id: int = None, db: Session = Depends(get_db)):
@@ -334,7 +334,7 @@ async def get_society_skills(society_id: int, current_user_id: int = None, db: S
                 "user_lat": u.latitude if u else None,
                 "user_lng": u.longitude if u else None,
             })
-    return result
+        return result
     except Exception as e:
         import traceback
         raise HTTPException(status_code=500, detail=str(e) + "\n" + traceback.format_exc())
