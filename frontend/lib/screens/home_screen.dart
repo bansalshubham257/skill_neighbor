@@ -1,0 +1,98 @@
+import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'skill_list_screen.dart';
+import 'add_skill_screen.dart';
+import 'profile_screen.dart';
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _currentIndex = 0;
+  bool showNearby = true;
+  Position? _currentPosition;
+
+  @override
+  void initState() {
+    super.initState();
+    _getLocation();
+  }
+
+  Future<void> _getLocation() async {
+    try {
+      final pos = await Geolocator.getCurrentPosition();
+      if (mounted) setState(() => _currentPosition = pos);
+    } catch (_) {}
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screens = [
+      _buildExplore(),
+      const AddSkillScreen(),
+      const ProfileScreen(),
+    ];
+
+    return Scaffold(
+      appBar: _currentIndex == 0
+          ? AppBar(
+              title: const Text('SkillNeighbor'),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.person),
+                  onPressed: () {
+                    setState(() => _currentIndex = 2);
+                  },
+                ),
+              ],
+            )
+          : null,
+      body: screens[_currentIndex],
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentIndex,
+        onDestinationSelected: (i) => setState(() => _currentIndex = i),
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.explore), label: 'Explore'),
+          NavigationDestination(icon: Icon(Icons.add_circle), label: 'Add Skill'),
+          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExplore() {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          child: SegmentedButton<bool>(
+            segments: const [
+              ButtonSegment(
+                  value: true,
+                  label: Text('Explore Nearby'),
+                  icon: Icon(Icons.map)),
+              ButtonSegment(
+                  value: false,
+                  label: Text('My Society'),
+                  icon: Icon(Icons.home)),
+            ],
+            selected: {showNearby},
+            onSelectionChanged: (val) {
+              setState(() => showNearby = val.first);
+            },
+          ),
+        ),
+        Expanded(
+          child: SkillListScreen(
+            isNearby: showNearby,
+            currentPosition: _currentPosition,
+          ),
+        ),
+      ],
+    );
+  }
+}
