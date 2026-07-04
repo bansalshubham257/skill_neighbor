@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'services/api_service.dart';
+import 'services/ad_service.dart';
 import 'services/settings_service.dart';
 import 'screens/auth_screen.dart';
 import 'screens/home_screen.dart';
@@ -11,6 +12,9 @@ import 'screens/choose_society_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
+  await AdService().init();
+  AdService().loadInterstitialAd();
+  AdService().loadRewardedAd();
 
   await Hive.openBox('user_box');
   await Hive.openBox('bookmarks_box');

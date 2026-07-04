@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/api_service.dart';
 
+import '../services/ad_service.dart';
+
 class RequestsReceivedScreen extends StatefulWidget {
   const RequestsReceivedScreen({super.key});
 
@@ -34,11 +36,43 @@ class _RequestsReceivedScreenState extends State<RequestsReceivedScreen> {
     try {
       await Provider.of<ApiService>(context, listen: false).respondRequest(requestId, status);
       _load();
+      if (status == 'accepted') AdService().showRewardedAd(onEarned: () {});
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
       }
     }
+  }
+
+  Future<void> _showRatingDialog(int skillId) async {
+    int rating = 5;
+    final commentCtl = TextEditingController();
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Rate this Skill'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(5, (i) => IconButton(
+                icon: Icon(i < rating ? Icons.star : Icons.star_border, color: Colors.amber),
+                onPressed: () => rating = i + 1,
+              )),
+            ),
+            TextField(controller: commentCtl, decoration: const InputDecoration(hintText: 'Comment')),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(onPressed: () async {
+            await Provider.of<ApiService>(context, listen: false).addRating(skillId, rating, commentCtl.text);
+            if (mounted) Navigator.pop(ctx);
+          }, child: const Text('Submit')),
+        ],
+      ),
+    );
   }
 
   @override
@@ -56,10 +90,10 @@ class _RequestsReceivedScreenState extends State<RequestsReceivedScreen> {
                     itemBuilder: (context, index) {
                       final r = _requests[index];
                       final isPending = r['status'] == 'pending';
+                      final isAccepted = r['status'] == 'accepted';
                       return Card(
                         margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                         child: ListTile(
-                          leading: CircleAvatar(child: Text(r['from_username']?[0] ?? '?')),
                           title: Text('${r['from_username']} wants ${r['skill_title']}'),
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -83,7 +117,14 @@ class _RequestsReceivedScreenState extends State<RequestsReceivedScreen> {
                                     ),
                                   ],
                                 )
-                              : _statusChip(r['status']),
+                              : Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (isAccepted)
+                                      IconButton(icon: const Icon(Icons.star_border), onPressed: () => _showRatingDialog(r['skill_id'])),
+                                    _statusChip(r['status']),
+                                  ],
+                                ),
                         ),
                       );
                     },

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/api_service.dart';
 
+import '../services/ad_service.dart';
+
 class SkillDetailScreen extends StatefulWidget {
   final dynamic skill;
   const SkillDetailScreen({super.key, required this.skill});
@@ -44,6 +46,7 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Request sent!")),
         );
+        AdService().showRewardedAd(onEarned: () {});
       }
     } catch (e) {
       if (mounted) {

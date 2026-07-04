@@ -74,3 +74,14 @@ class SkillRequest(Base):
     status = Column(String, default="pending")
     message = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+class SkillRating(Base):
+    __tablename__ = "skill_ratings"
+    __table_args__ = {"schema": SCHEMA}
+    id = Column(Integer, primary_key=True, index=True)
+    skill_id = Column(Integer, ForeignKey("skills.id"))
+    from_user_id = Column(Integer, ForeignKey("users.id"))
+    to_user_id = Column(Integer, ForeignKey("users.id"))
+    rating = Column(Integer)
+    comment = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)

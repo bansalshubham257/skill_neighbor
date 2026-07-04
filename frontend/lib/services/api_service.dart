@@ -223,6 +223,19 @@ class ApiService {
     return response.data;
   }
 
+  // Ratings
+  Future<Map<String, dynamic>> addRating(int skillId, int rating, String comment) async {
+    final uid = userId;
+    if (uid == null) throw Exception("Not logged in");
+    final response = await _dio.post('/ratings/add', queryParameters: {
+      'skill_id': skillId,
+      'from_user_id': uid,
+      'rating': rating,
+      'comment': comment,
+    });
+    return response.data;
+  }
+
   // Notifications
   Future<List<dynamic>> fetchNotifications() async {
     final uid = userId;

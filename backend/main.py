@@ -3,7 +3,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
 from typing import Optional
 from pydantic import BaseModel
-from models import Base, User, Society, Skill, AdToken, SkillLike, SkillRequest, SCHEMA
+from models import Base, User, Society, Skill, AdToken, SkillLike, SkillRequest, SkillRating, SCHEMA
 import os
 import math
 import datetime
@@ -167,11 +167,15 @@ async def delete_skill(skill_id: int, user_id: int, db: Session = Depends(get_db
 
 @app.get("/skills/favorites")
 async def get_favorite_skills(user_id: int, db: Session = Depends(get_db)):
+    print(f"DEBUG: Fetching favorites for user_id={user_id}")
     likes = db.query(SkillLike).filter(SkillLike.user_id == user_id).all()
+    print(f"DEBUG: Found likes: {likes}")
     skill_ids = [l.skill_id for l in likes]
     if not skill_ids:
+        print("DEBUG: No liked skill IDs found.")
         return []
     skills = db.query(Skill).filter(Skill.id.in_(skill_ids)).all()
+    print(f"DEBUG: Found skills: {skills}")
     result = []
     for s in skills:
         u = db.query(User).filter(User.id == s.user_id).first()
@@ -188,6 +192,7 @@ async def get_favorite_skills(user_id: int, db: Session = Depends(get_db)):
             "society_id": u.society_id if u else None,
             "society_name": db.query(Society.name).filter(Society.id == u.society_id).scalar() if u and u.society_id else None,
         })
+    print(f"DEBUG: Returning result: {result}")
     return result
 
 # --- Society Endpoints ---
@@ -365,7 +370,40 @@ async def toggle_like(skill_id: int, user_id: int, db: Session = Depends(get_db)
     db.commit()
     return {"status": "liked"}
 
-# --- Request Endpoints ---
+# --- Rating Endpoints ---
+
+@app.post("/ratings/add")
+async def add_rating(skill_id: int, from_user_id: int, rating: int, comment: str = "", db: Session = Depends(get_db)):
+    skill = db.query(Skill).filter(Skill.id == skill_id).first()
+    if not skill:
+        raise HTTPException(status_code=404, detail="Skill not found")
+    
+    # Simple check: can only rate if accepted request exists? 
+    # For now, allow rating any skill.
+    
+    rating_entry = SkillRating(
+        skill_id=skill_id, 
+        from_user_id=from_user_id, 
+        to_user_id=skill.user_id,
+        rating=rating, 
+        comment=comment
+    )
+    db.add(rating_entry)
+    db.commit()
+    return {"status": "success"}
+
+@app.get("/ratings/get/{skill_id}")
+async def get_ratings(skill_id: int, db: Session = Depends(get_db)):
+    ratings = db.query(SkillRating).filter(SkillRating.skill_id == skill_id).all()
+    result = []
+    for r in ratings:
+        from_user = db.query(User).filter(User.id == r.from_user_id).first()
+        result.append({
+            "rating": r.rating,
+            "comment": r.comment,
+            "username": from_user.username if from_user else "Unknown",
+        })
+    return result
 
 @app.post("/requests/send")
 async def send_request(skill_id: int, from_user_id: int, message: str = "", db: Session = Depends(get_db)):

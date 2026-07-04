@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:dio/dio.dart';
 import '../services/api_service.dart';
 
+import '../services/ad_service.dart';
+
 class AddSkillScreen extends StatefulWidget {
   final VoidCallback? onSkillAdded;
   final dynamic existingSkill;
@@ -98,6 +100,7 @@ class _AddSkillScreenState extends State<AddSkillScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Skill published!')),
           );
+          AdService().showRewardedAd(onEarned: () {});
         }
       }
 
