@@ -41,6 +41,7 @@ class ApiService {
     double? hourlyRate,
     required String phoneNumber,
     required int sharePhone,
+    required int shareEmail,
   }) async {
     final uid = userId;
     if (uid == null) throw Exception("Not logged in");
@@ -54,6 +55,7 @@ class ApiService {
       'hourly_rate': hourlyRate,
       'phone_number': phoneNumber,
       'share_phone': sharePhone,
+      'share_email': shareEmail,
     });
     return response.data;
   }
@@ -113,6 +115,7 @@ class ApiService {
     double? hourlyRate,
     required String phoneNumber,
     required int sharePhone,
+    required int shareEmail,
   }) async {
     final uid = userId;
     if (uid == null) throw Exception("Not logged in");
@@ -127,6 +130,7 @@ class ApiService {
       'hourly_rate': hourlyRate,
       'phone_number': phoneNumber,
       'share_phone': sharePhone,
+      'share_email': shareEmail,
     });
     return response.data;
   }

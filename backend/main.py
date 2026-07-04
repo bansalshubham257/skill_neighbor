@@ -79,6 +79,7 @@ class SkillCreate(BaseModel):
     hourly_rate: Optional[float] = None
     phone_number: str
     share_phone: int = 1
+    share_email: int = 1
 
 class SocietyCreate(BaseModel):
     name: str
@@ -116,11 +117,18 @@ async def login(data: LoginRequest, db: Session = Depends(get_db)):
 
 @app.post("/auth/register")
 async def register(data: RegisterRequest, db: Session = Depends(get_db)):
+    if not data.email:
+        raise HTTPException(status_code=400, detail="Email is required")
+
     # Only check for username existence
     existing = db.query(User).filter(User.username == data.username).first()
     if existing:
         raise HTTPException(status_code=400, detail="Username already exists")
     
+    existing_email = db.query(User).filter(User.email == data.email).first()
+    if existing_email:
+        raise HTTPException(status_code=400, detail="Email already exists")
+
     user = User(
         username=data.username,
         password=hash_password(data.password),

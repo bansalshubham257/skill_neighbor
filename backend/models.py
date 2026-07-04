@@ -44,6 +44,7 @@ class Skill(Base):
     hourly_rate = Column(Float, nullable=True)
     phone_number = Column(String)
     share_phone = Column(Integer, default=1)
+    share_email = Column(Integer, default=1)
 
     user = relationship("User", back_populates="skills")
 

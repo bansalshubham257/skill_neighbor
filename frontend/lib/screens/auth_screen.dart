@@ -13,6 +13,7 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen> {
   final _usernameCtl = TextEditingController();
+  final _emailCtl = TextEditingController();
   final _passwordCtl = TextEditingController();
   bool _isLoading = false;
   bool _isRegister = false;
@@ -34,7 +35,7 @@ class _AuthScreenState extends State<AuthScreen> {
       final api = Provider.of<ApiService>(context, listen: false);
 
       if (_isRegister) {
-        await api.register(username, password);
+        await api.register(username, password, email: _emailCtl.text.trim());
       }
 
       final result = await api.login(username, password);
@@ -101,6 +102,18 @@ class _AuthScreenState extends State<AuthScreen> {
                   border: OutlineInputBorder(),
                 ),
               ),
+              if (_isRegister) ...[
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _emailCtl,
+                  decoration: const InputDecoration(
+                    labelText: 'Email',
+                    prefixIcon: Icon(Icons.email),
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.emailAddress,
+                ),
+              ],
               const SizedBox(height: 16),
               TextField(
                 controller: _passwordCtl,

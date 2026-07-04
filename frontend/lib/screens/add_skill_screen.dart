@@ -26,6 +26,7 @@ class _AddSkillScreenState extends State<AddSkillScreen> {
   String _category = 'Tutoring';
   String _priceType = 'Negotiable';
   bool _sharePhone = true;
+  bool _shareEmail = true;
   bool _isSubmitting = false;
   bool get _isEditing => widget.existingSkill != null;
 
@@ -47,6 +48,7 @@ class _AddSkillScreenState extends State<AddSkillScreen> {
       _category = s['category'] ?? 'Tutoring';
       _priceType = s['price_type'] ?? 'Negotiable';
       _sharePhone = (s['share_phone'] ?? 1) == 1;
+      _shareEmail = (s['share_email'] ?? 1) == 1;
     }
   }
 
@@ -78,6 +80,7 @@ class _AddSkillScreenState extends State<AddSkillScreen> {
               : null,
           phoneNumber: _phoneCtl.text.trim(),
           sharePhone: _sharePhone ? 1 : 0,
+          shareEmail: _shareEmail ? 1 : 0,
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -95,6 +98,7 @@ class _AddSkillScreenState extends State<AddSkillScreen> {
               : null,
           phoneNumber: _phoneCtl.text.trim(),
           sharePhone: _sharePhone ? 1 : 0,
+          shareEmail: _shareEmail ? 1 : 0,
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -206,6 +210,11 @@ class _AddSkillScreenState extends State<AddSkillScreen> {
               title: const Text('Share Phone Number on Acceptance'),
               value: _sharePhone,
               onChanged: (v) => setState(() => _sharePhone = v),
+            ),
+            SwitchListTile(
+              title: const Text('Share Email Address on Acceptance'),
+              value: _shareEmail,
+              onChanged: (v) => setState(() => _shareEmail = v),
             ),
             const SizedBox(height: 32),
             _isSubmitting
