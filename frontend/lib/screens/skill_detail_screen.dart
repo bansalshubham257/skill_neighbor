@@ -122,16 +122,25 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
                   ),
           ),
 
-          if (phoneUnlocked)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 20),
-                child: Text(
-                  skill['phone_number'],
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
+           if (phoneUnlocked)
+             Center(
+               child: Padding(
+                 padding: const EdgeInsets.only(top: 20),
+                 child: Column(
+                   children: [
+                     Text(
+                       skill['phone_number'],
+                       style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                     ),
+                     if (skill['share_email'] == 1 && skill['email'] != null)
+                       Text(
+                         'Email: ${skill['email']}',
+                         style: const TextStyle(fontSize: 16, color: Colors.grey),
+                       ),
+                   ],
+                 ),
+               ),
+             ),
           // Only show request button if skill doesn't belong to current user
           if (skill['user_id'] != Provider.of<ApiService>(context).userId)
             Padding(

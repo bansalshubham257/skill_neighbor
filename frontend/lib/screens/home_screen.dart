@@ -104,15 +104,27 @@ class _HomeScreenState extends State<HomeScreen> {
             )
           : null,
       body: screens[_currentIndex],
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (i) => setState(() => _currentIndex = i),
-        destinations: [
-          NavigationDestination(icon: const Icon(Icons.explore), label: AppStrings.get('explore', lang: context.watch<SettingsService>().language)),
-          NavigationDestination(icon: const Icon(Icons.add_circle), label: AppStrings.get('add_skill', lang: context.watch<SettingsService>().language)),
-          NavigationDestination(icon: const Icon(Icons.person), label: AppStrings.get('profile', lang: context.watch<SettingsService>().language)),
-        ],
-      ),
+       bottomNavigationBar: Column(
+         mainAxisSize: MainAxisSize.min,
+         children: [
+           if (AdService().bannerAd != null)
+             Container(
+               alignment: Alignment.center,
+               width: AdSize.banner.width.toDouble(),
+               height: AdSize.banner.height.toDouble(),
+               child: AdWidget(ad: AdService().bannerAd!),
+             ),
+           NavigationBar(
+             selectedIndex: _currentIndex,
+             onDestinationSelected: (i) => setState(() => _currentIndex = i),
+             destinations: [
+               NavigationDestination(icon: const Icon(Icons.explore), label: AppStrings.get('explore', lang: context.watch<SettingsService>().language)),
+               NavigationDestination(icon: const Icon(Icons.add_circle), label: AppStrings.get('add_skill', lang: context.watch<SettingsService>().language)),
+               NavigationDestination(icon: const Icon(Icons.person), label: AppStrings.get('profile', lang: context.watch<SettingsService>().language)),
+             ],
+           ),
+         ],
+       ),
     );
   }
 
