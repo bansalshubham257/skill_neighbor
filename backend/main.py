@@ -145,6 +145,27 @@ async def create_society(user_id: int, data: SocietyCreate, db: Session = Depend
 
     return {"status": "success", "society_id": society.id, "name": society.name}
 
+@app.post("/societies/leave")
+async def leave_society(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.society_id = None
+    db.commit()
+    return {"status": "success", "message": "Left society"}
+
+@app.post("/societies/join")
+async def join_society(user_id: int, society_id: int, db: Session = Depends(get_db)):
+    society = db.query(Society).filter(Society.id == society_id).first()
+    if not society:
+        raise HTTPException(status_code=404, detail="Society not found")
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.society_id = society.id
+    db.commit()
+    return {"status": "success", "society_id": society.id, "name": society.name}
+
 # --- Search Endpoints ---
 
 @app.get("/skills/nearby")

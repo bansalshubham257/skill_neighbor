@@ -74,6 +74,12 @@ class ApiService {
     return response.data;
   }
 
+  Future<void> leaveSociety() async {
+    final uid = userId;
+    if (uid == null) throw Exception("Not logged in");
+    await _dio.post('/societies/leave', queryParameters: {'user_id': uid});
+  }
+
   // Search
   Future<List<dynamic>> fetchNearbySkills(
       double lat, double lng, double radius) async {
