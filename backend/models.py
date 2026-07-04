@@ -1,11 +1,13 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, MetaData
 from sqlalchemy.orm import declarative_base, relationship
 import datetime
 
-Base = declarative_base()
+SCHEMA = "skillneighbor"
+Base = declarative_base(metadata=MetaData(schema=SCHEMA))
 
 class User(Base):
     __tablename__ = "users"
+    __table_args__ = {"schema": SCHEMA}
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
     password = Column(String)
@@ -21,6 +23,7 @@ class User(Base):
 
 class Society(Base):
     __tablename__ = "societies"
+    __table_args__ = {"schema": SCHEMA}
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
     latitude = Column(Float)
@@ -30,6 +33,7 @@ class Society(Base):
 
 class Skill(Base):
     __tablename__ = "skills"
+    __table_args__ = {"schema": SCHEMA}
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     category = Column(String, index=True)
@@ -43,6 +47,7 @@ class Skill(Base):
 
 class AdToken(Base):
     __tablename__ = "ad_tokens"
+    __table_args__ = {"schema": SCHEMA}
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     token_type = Column(String)
@@ -51,6 +56,7 @@ class AdToken(Base):
 
 class SkillLike(Base):
     __tablename__ = "skill_likes"
+    __table_args__ = {"schema": SCHEMA}
     id = Column(Integer, primary_key=True, index=True)
     skill_id = Column(Integer, ForeignKey("skills.id"))
     user_id = Column(Integer, ForeignKey("users.id"))

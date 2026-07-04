@@ -7,7 +7,8 @@ import os, math, sys
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Base, User, Society, Skill, AdToken, SkillLike
+from sqlalchemy import text
+from models import Base, User, Society, Skill, AdToken, SkillLike, SCHEMA
 
 clat, clng = 12.9655, 77.7092
 
@@ -98,6 +99,9 @@ if __name__ == "__main__":
     if not DATABASE_URL:
         print("Set DATABASE_URL env var"); sys.exit(1)
     engine = create_engine(DATABASE_URL)
+    with engine.connect() as conn:
+        conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}"))
+        conn.commit()
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     SessionLocal = sessionmaker(bind=engine)

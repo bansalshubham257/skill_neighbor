@@ -1,9 +1,9 @@
 from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
 from typing import Optional
 from pydantic import BaseModel
-from models import Base, User, Society, Skill, AdToken, SkillLike
+from models import Base, User, Society, Skill, AdToken, SkillLike, SCHEMA
 import os
 import math
 import datetime
@@ -21,6 +21,9 @@ def get_db():
     finally:
         db.close()
 
+with engine.connect() as conn:
+    conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}"))
+    conn.commit()
 Base.metadata.create_all(bind=engine)
 
 # Run seed if SEED_DB is set (e.g. SEED_DB=true on first deploy)
