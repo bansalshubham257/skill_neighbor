@@ -4,6 +4,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from typing import Optional
 from pydantic import BaseModel
 from models import Base, User, Society, Skill, AdToken, SkillLike, SkillRequest, SkillRating, SCHEMA
+from passlib.context import CryptContext
 import os
 import math
 import datetime
@@ -11,8 +12,21 @@ import datetime
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is not set")
-engine = create_engine(DATABASE_URL)
+# Connect with search_path set to the schema
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"options": f"-csearch_path={SCHEMA}"}
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
 
 def get_db():
     db = SessionLocal()
@@ -77,8 +91,8 @@ def haversine(lat1, lng1, lat2, lng2):
 
 @app.post("/auth/login")
 async def login(data: LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.username == data.username, User.password == data.password).first()
-    if not user:
+    user = db.query(User).filter(User.username == data.username).first()
+    if not user or not verify_password(data.password, user.password):
         raise HTTPException(status_code=401, detail="Invalid username or password")
     society_name = None
     if user.society_id:
@@ -102,7 +116,7 @@ async def register(data: RegisterRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Username or email already exists")
     user = User(
         username=data.username,
-        password=data.password,
+        password=hash_password(data.password),
         email=data.email,
         latitude=data.lat,
         longitude=data.lng,
