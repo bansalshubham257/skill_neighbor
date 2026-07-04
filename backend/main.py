@@ -298,11 +298,13 @@ async def get_nearby_skills(lat: float, lng: float, radius: float = 5.0, current
             "email": u.email if u else None,
             "society_id": u.society_id if u else None,
             "society_name": db.query(Society.name).filter(Society.id == u.society_id).scalar() if u and u.society_id else None,
-            "is_liked": s.id in liked_skill_ids,
-            "user_lat": u.latitude if u else None,
-            "user_lng": u.longitude if u else None,
-        })
-    return result
+             "is_liked": s.id in liked_skill_ids,
+             "user_lat": u.latitude if u else None,
+             "user_lng": u.longitude if u else None,
+             "share_phone": s.share_phone,
+             "share_email": s.share_email,
+         })
+     return result
 
 @app.get("/skills/society/{society_id}")
 async def get_society_skills(society_id: int, current_user_id: int = None, db: Session = Depends(get_db)):

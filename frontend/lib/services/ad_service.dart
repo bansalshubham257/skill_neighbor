@@ -8,8 +8,8 @@ class AdService {
 
   // Test Ad Unit IDs (Android)
   static const String _interstitialId = 'ca-app-pub-3940256099942544/1033173712';
-  static const String _rewardedId = 'ca-app-pub-3940256099942544/5224354917';
-  static const String _bannerId = 'ca-app-pub-3940256099942544/6300978111';
+  static const String _rewardedId = 'ca-app-pub-1394062189372273/5052491011';
+  static const String _bannerId = 'ca-app-pub-1394062189372273/8504650860';
 
   InterstitialAd? _interstitialAd;
   RewardedAd? _rewardedAd;

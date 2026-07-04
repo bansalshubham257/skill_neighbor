@@ -4,6 +4,8 @@ import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
 import '../services/api_service.dart';
 import '../services/settings_service.dart';
+import '../services/ad_service.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'skill_list_screen.dart';
 import 'add_skill_screen.dart';
 import 'profile_screen.dart';
