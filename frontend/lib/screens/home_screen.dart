@@ -116,11 +116,55 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  String? _selectedCategory;
+
+  List<Map<String, dynamic>> get _topCategories => [
+    {'name': 'Tutor', 'icon': Icons.school},
+    {'name': 'Music', 'icon': Icons.music_note},
+    {'name': 'Technology', 'icon': Icons.computer},
+    {'name': 'Fitness', 'icon': Icons.fitness_center},
+    {'name': 'Cooking', 'icon': Icons.restaurant},
+    {'name': 'Art', 'icon': Icons.palette},
+  ];
+
   Widget _buildExplore() {
     return Column(
       children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.asset(
+              'assets/skill_banner.png',
+              height: 130,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 44,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            children: _topCategories.map((cat) {
+              final selected = _selectedCategory == cat['name'];
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  avatar: Icon(cat['icon'] as IconData, size: 16),
+                  label: Text(cat['name'] as String, style: const TextStyle(fontSize: 12)),
+                  selected: selected,
+                  onSelected: (val) {
+                    setState(() => _selectedCategory = val ? cat['name'] as String? : null);
+                  },
+                ),
+              );
+            }).toList(),
+          ),
+        ),
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: SegmentedButton<bool>(
             segments: [
               ButtonSegment(
@@ -151,6 +195,7 @@ class _HomeScreenState extends State<HomeScreen> {
             isNearby: showNearby,
             currentPosition: _currentPosition,
             userSocietyId: Hive.box('user_box').get('society_id'),
+            categoryFilter: _selectedCategory,
           ),
         ),
       ],

@@ -167,6 +167,43 @@ class ApiService {
     return response.data;
   }
 
+  // Requests
+  Future<Map<String, dynamic>> sendRequest(int skillId, {String message = ''}) async {
+    final uid = userId;
+    if (uid == null) throw Exception("Not logged in");
+    final response = await _dio.post('/requests/send', queryParameters: {
+      'skill_id': skillId,
+      'from_user_id': uid,
+      'message': message,
+    });
+    return response.data;
+  }
+
+  Future<List<dynamic>> fetchSentRequests() async {
+    final uid = userId;
+    if (uid == null) throw Exception("Not logged in");
+    final response = await _dio.get('/requests/sent', queryParameters: {'user_id': uid});
+    return response.data;
+  }
+
+  Future<List<dynamic>> fetchReceivedRequests() async {
+    final uid = userId;
+    if (uid == null) throw Exception("Not logged in");
+    final response = await _dio.get('/requests/received', queryParameters: {'user_id': uid});
+    return response.data;
+  }
+
+  Future<Map<String, dynamic>> respondRequest(int requestId, String status) async {
+    final uid = userId;
+    if (uid == null) throw Exception("Not logged in");
+    final response = await _dio.put('/requests/respond', queryParameters: {
+      'request_id': requestId,
+      'user_id': uid,
+      'status': status,
+    });
+    return response.data;
+  }
+
   // Notifications
   Future<List<dynamic>> fetchNotifications() async {
     final uid = userId;

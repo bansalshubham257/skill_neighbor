@@ -3,7 +3,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
 from typing import Optional
 from pydantic import BaseModel
-from models import Base, User, Society, Skill, AdToken, SkillLike, SCHEMA
+from models import Base, User, Society, Skill, AdToken, SkillLike, SkillRequest, SCHEMA
 import os
 import math
 import datetime
@@ -334,6 +334,73 @@ async def toggle_like(skill_id: int, user_id: int, db: Session = Depends(get_db)
     db.add(like)
     db.commit()
     return {"status": "liked"}
+
+# --- Request Endpoints ---
+
+@app.post("/requests/send")
+async def send_request(skill_id: int, from_user_id: int, message: str = "", db: Session = Depends(get_db)):
+    skill = db.query(Skill).filter(Skill.id == skill_id).first()
+    if not skill:
+        raise HTTPException(status_code=404, detail="Skill not found")
+    if from_user_id == skill.user_id:
+        raise HTTPException(status_code=400, detail="Cannot request your own skill")
+    existing = db.query(SkillRequest).filter(
+        SkillRequest.skill_id == skill_id,
+        SkillRequest.from_user_id == from_user_id,
+        SkillRequest.status == "pending",
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Request already sent")
+    req = SkillRequest(skill_id=skill_id, from_user_id=from_user_id, to_user_id=skill.user_id, message=message)
+    db.add(req)
+    db.commit()
+    db.refresh(req)
+    return {"status": "success", "request_id": req.id}
+
+@app.get("/requests/sent")
+async def get_sent_requests(user_id: int, db: Session = Depends(get_db)):
+    requests = db.query(SkillRequest).filter(SkillRequest.from_user_id == user_id).order_by(SkillRequest.created_at.desc()).all()
+    result = []
+    for r in requests:
+        skill = db.query(Skill).filter(Skill.id == r.skill_id).first()
+        result.append({
+            "id": r.id,
+            "skill_id": r.skill_id,
+            "skill_title": skill.title if skill else "Unknown",
+            "status": r.status,
+            "message": r.message,
+            "created_at": r.created_at.isoformat() if r.created_at else None,
+        })
+    return result
+
+@app.get("/requests/received")
+async def get_received_requests(user_id: int, db: Session = Depends(get_db)):
+    requests = db.query(SkillRequest).filter(SkillRequest.to_user_id == user_id).order_by(SkillRequest.created_at.desc()).all()
+    result = []
+    for r in requests:
+        skill = db.query(Skill).filter(Skill.id == r.skill_id).first()
+        from_user = db.query(User).filter(User.id == r.from_user_id).first()
+        result.append({
+            "id": r.id,
+            "skill_id": r.skill_id,
+            "skill_title": skill.title if skill else "Unknown",
+            "from_username": from_user.username if from_user else "Unknown",
+            "status": r.status,
+            "message": r.message,
+            "created_at": r.created_at.isoformat() if r.created_at else None,
+        })
+    return result
+
+@app.put("/requests/respond")
+async def respond_request(request_id: int, user_id: int, status: str, db: Session = Depends(get_db)):
+    req = db.query(SkillRequest).filter(SkillRequest.id == request_id, SkillRequest.to_user_id == user_id).first()
+    if not req:
+        raise HTTPException(status_code=404, detail="Request not found")
+    if status not in ("accepted", "rejected"):
+        raise HTTPException(status_code=400, detail="Invalid status")
+    req.status = status
+    db.commit()
+    return {"status": "success", "request_id": req.id, "new_status": req.status}
 
 # --- Notification Endpoints ---
 

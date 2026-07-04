@@ -61,3 +61,14 @@ class SkillLike(Base):
     skill_id = Column(Integer, ForeignKey("skills.id"))
     user_id = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+class SkillRequest(Base):
+    __tablename__ = "skill_requests"
+    __table_args__ = {"schema": SCHEMA}
+    id = Column(Integer, primary_key=True, index=True)
+    skill_id = Column(Integer, ForeignKey("skills.id"))
+    from_user_id = Column(Integer, ForeignKey("users.id"))
+    to_user_id = Column(Integer, ForeignKey("users.id"))
+    status = Column(String, default="pending")
+    message = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)

@@ -6,6 +6,8 @@ import '../services/settings_service.dart';
 import 'add_skill_screen.dart';
 import 'my_skills_screen.dart';
 import 'settings_screen.dart';
+import 'requests_sent_screen.dart';
+import 'requests_received_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -127,6 +129,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: const TextStyle(color: Colors.red)),
               onTap: _isLeaving ? null : _leaveSociety,
             ),
+          const Divider(),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+            child: Text(
+              'Requests',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade600,
+              ),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.send, color: Colors.blue),
+            title: const Text('Requests Sent'),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RequestsSentScreen())),
+          ),
+          ListTile(
+            leading: const Icon(Icons.inbox, color: Colors.green),
+            title: const Text('Requests Received'),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RequestsReceivedScreen())),
+          ),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.settings),

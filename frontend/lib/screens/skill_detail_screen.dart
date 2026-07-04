@@ -36,6 +36,24 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
     }
   }
 
+  Future<void> _sendRequest(BuildContext context) async {
+    try {
+      final api = Provider.of<ApiService>(context, listen: false);
+      final result = await api.sendRequest(widget.skill['id']);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Request sent!")),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("$e")),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final skill = widget.skill;
@@ -108,6 +126,23 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
                 child: Text(
                   skill['phone_number'],
                   style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          // Only show request button if skill doesn't belong to current user
+          if (skill['user_id'] != Provider.of<ApiService>(context).userId)
+            Padding(
+              padding: const EdgeInsets.only(top: 20),
+              child: Center(
+                child: ElevatedButton.icon(
+                  onPressed: () => _sendRequest(context),
+                  icon: const Icon(Icons.handshake),
+                  label: const Text("Send Request"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                  ),
                 ),
               ),
             ),

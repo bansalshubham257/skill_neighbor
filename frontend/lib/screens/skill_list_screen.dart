@@ -10,12 +10,14 @@ class SkillListScreen extends StatefulWidget {
   final bool isNearby;
   final Position? currentPosition;
   final int? userSocietyId;
+  final String? categoryFilter;
 
   const SkillListScreen({
     super.key,
     required this.isNearby,
     this.currentPosition,
     this.userSocietyId,
+    this.categoryFilter,
   });
 
   @override
@@ -102,16 +104,23 @@ class _SkillListScreenState extends State<SkillListScreen> {
   void _filter() {
     final q = _searchCtrl.text.toLowerCase();
     setState(() {
-      if (q.isEmpty) {
-        filteredSkills = List.from(skills);
-      } else {
-        filteredSkills = skills.where((s) {
+      filteredSkills = skills.where((s) {
+        if (q.isNotEmpty) {
           final title = (s['title'] ?? '').toString().toLowerCase();
           final desc = (s['description'] ?? '').toString().toLowerCase();
           final cat = (s['category'] ?? '').toString().toLowerCase();
-          return title.contains(q) || desc.contains(q) || cat.contains(q);
-        }).toList();
-      }
+          if (!title.contains(q) && !desc.contains(q) && !cat.contains(q)) {
+            return false;
+          }
+        }
+        if (widget.categoryFilter != null) {
+          final cat = (s['category'] ?? '').toString().toLowerCase();
+          if (cat != widget.categoryFilter!.toLowerCase()) {
+            return false;
+          }
+        }
+        return true;
+      }).toList();
     });
   }
 
