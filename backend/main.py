@@ -334,7 +334,7 @@ async def get_society_skills(society_id: int, current_user_id: int = None, db: S
                 "user_lat": u.latitude if u else None,
                 "user_lng": u.longitude if u else None,
             })
-        return result
+    return result
     except Exception as e:
         import traceback
         raise HTTPException(status_code=500, detail=str(e) + "\n" + traceback.format_exc())
