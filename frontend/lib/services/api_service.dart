@@ -40,6 +40,7 @@ class ApiService {
     required String priceType,
     double? hourlyRate,
     required String phoneNumber,
+    required int sharePhone,
   }) async {
     final uid = userId;
     if (uid == null) throw Exception("Not logged in");
@@ -52,6 +53,7 @@ class ApiService {
       'price_type': priceType,
       'hourly_rate': hourlyRate,
       'phone_number': phoneNumber,
+      'share_phone': sharePhone,
     });
     return response.data;
   }
@@ -110,6 +112,7 @@ class ApiService {
     required String priceType,
     double? hourlyRate,
     required String phoneNumber,
+    required int sharePhone,
   }) async {
     final uid = userId;
     if (uid == null) throw Exception("Not logged in");
@@ -123,6 +126,7 @@ class ApiService {
       'price_type': priceType,
       'hourly_rate': hourlyRate,
       'phone_number': phoneNumber,
+      'share_phone': sharePhone,
     });
     return response.data;
   }
@@ -201,6 +205,21 @@ class ApiService {
       'user_id': uid,
       'status': status,
     });
+    return response.data;
+  }
+
+  // Favorites
+  Future<List<dynamic>> fetchFavoriteSkills() async {
+    final uid = userId;
+    if (uid == null) throw Exception("Not logged in");
+    final response = await _dio.get('/skills/favorites', queryParameters: {'user_id': uid});
+    return response.data;
+  }
+
+  Future<List<dynamic>> fetchSentRequestDetails() async {
+    final uid = userId;
+    if (uid == null) throw Exception("Not logged in");
+    final response = await _dio.get('/requests/sent/details', queryParameters: {'user_id': uid});
     return response.data;
   }
 

@@ -57,6 +57,7 @@ class SkillCreate(BaseModel):
     price_type: str
     hourly_rate: Optional[float] = None
     phone_number: str
+    share_phone: int = 1
 
 class SocietyCreate(BaseModel):
     name: str
@@ -163,6 +164,31 @@ async def delete_skill(skill_id: int, user_id: int, db: Session = Depends(get_db
     db.delete(skill)
     db.commit()
     return {"status": "success", "message": "Skill deleted"}
+
+@app.get("/skills/favorites")
+async def get_favorite_skills(user_id: int, db: Session = Depends(get_db)):
+    likes = db.query(SkillLike).filter(SkillLike.user_id == user_id).all()
+    skill_ids = [l.skill_id for l in likes]
+    if not skill_ids:
+        return []
+    skills = db.query(Skill).filter(Skill.id.in_(skill_ids)).all()
+    result = []
+    for s in skills:
+        u = db.query(User).filter(User.id == s.user_id).first()
+        result.append({
+            "id": s.id,
+            "user_id": s.user_id,
+            "category": s.category,
+            "title": s.title,
+            "description": s.description,
+            "price_type": s.price_type,
+            "hourly_rate": s.hourly_rate,
+            "phone_number": s.phone_number,
+            "email": u.email if u else None,
+            "society_id": u.society_id if u else None,
+            "society_name": db.query(Society.name).filter(Society.id == u.society_id).scalar() if u and u.society_id else None,
+        })
+    return result
 
 # --- Society Endpoints ---
 
@@ -384,7 +410,7 @@ async def get_received_requests(user_id: int, db: Session = Depends(get_db)):
     for r in requests:
         skill = db.query(Skill).filter(Skill.id == r.skill_id).first()
         from_user = db.query(User).filter(User.id == r.from_user_id).first()
-        result.append({
+        entry = {
             "id": r.id,
             "skill_id": r.skill_id,
             "skill_title": skill.title if skill else "Unknown",
@@ -392,6 +418,33 @@ async def get_received_requests(user_id: int, db: Session = Depends(get_db)):
             "status": r.status,
             "message": r.message,
             "created_at": r.created_at.isoformat() if r.created_at else None,
+            "requester_phone": None,
+        }
+        if r.status == "accepted" and from_user:
+            entry["requester_phone"] = from_user.phone
+        result.append(entry)
+    return result
+
+@app.get("/requests/sent/details")
+async def get_sent_request_details(user_id: int, db: Session = Depends(get_db)):
+    requests = db.query(SkillRequest).filter(SkillRequest.from_user_id == user_id).order_by(SkillRequest.created_at.desc()).all()
+    result = []
+    for r in requests:
+        skill = db.query(Skill).filter(Skill.id == r.skill_id).first()
+        owner = db.query(User).filter(User.id == r.to_user_id).first()
+        owner_phone = None
+        if r.status == "accepted" and skill:
+            if skill.share_phone:
+                owner_phone = skill.phone_number
+        result.append({
+            "id": r.id,
+            "skill_id": r.skill_id,
+            "skill_title": skill.title if skill else "Unknown",
+            "to_username": owner.username if owner else "Unknown",
+            "status": r.status,
+            "message": r.message,
+            "created_at": r.created_at.isoformat() if r.created_at else None,
+            "owner_phone": owner_phone,
         })
     return result
 

@@ -8,6 +8,7 @@ import 'my_skills_screen.dart';
 import 'settings_screen.dart';
 import 'requests_sent_screen.dart';
 import 'requests_received_screen.dart';
+import 'favorites_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -129,6 +130,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: const TextStyle(color: Colors.red)),
               onTap: _isLeaving ? null : _leaveSociety,
             ),
+          ListTile(
+            leading: const Icon(Icons.favorite, color: Colors.red),
+            title: const Text('My Favorites'),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoritesScreen())),
+          ),
           const Divider(),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),

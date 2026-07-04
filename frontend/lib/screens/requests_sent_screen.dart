@@ -23,7 +23,7 @@ class _RequestsSentScreenState extends State<RequestsSentScreen> {
     setState(() => _loading = true);
     try {
       final api = Provider.of<ApiService>(context, listen: false);
-      final list = await api.fetchSentRequests();
+      final list = await api.fetchSentRequestDetails();
       setState(() { _requests = list; _loading = false; });
     } catch (_) {
       setState(() => _loading = false);
@@ -47,9 +47,15 @@ class _RequestsSentScreenState extends State<RequestsSentScreen> {
                       return Card(
                         margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                         child: ListTile(
-                          leading: CircleAvatar(child: Text(r['skill_title']?[0] ?? '?')),
                           title: Text(r['skill_title'] ?? ''),
-                          subtitle: Text('Status: ${r['status']}'),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Status: ${r['status']}'),
+                              if (r['owner_phone'] != null)
+                                Text('Contact: ${r['owner_phone']}', style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
                           trailing: _statusChip(r['status']),
                         ),
                       );

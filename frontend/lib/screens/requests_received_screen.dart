@@ -61,7 +61,14 @@ class _RequestsReceivedScreenState extends State<RequestsReceivedScreen> {
                         child: ListTile(
                           leading: CircleAvatar(child: Text(r['from_username']?[0] ?? '?')),
                           title: Text('${r['from_username']} wants ${r['skill_title']}'),
-                          subtitle: Text(r['message']?.isNotEmpty == true ? r['message'] : 'Status: ${r['status']}'),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(r['message']?.isNotEmpty == true ? r['message'] : 'Status: ${r['status']}'),
+                              if (r['requester_phone'] != null)
+                                Text('Contact: ${r['requester_phone']}', style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
                           trailing: isPending
                               ? Row(
                                   mainAxisSize: MainAxisSize.min,

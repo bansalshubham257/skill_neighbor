@@ -12,6 +12,7 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     password = Column(String)
     email = Column(String, unique=True, index=True)
+    phone = Column(String, nullable=True)
     latitude = Column(Float)
     longitude = Column(Float)
     society_id = Column(Integer, ForeignKey("societies.id"), nullable=True)
@@ -42,6 +43,7 @@ class Skill(Base):
     price_type = Column(String)
     hourly_rate = Column(Float, nullable=True)
     phone_number = Column(String)
+    share_phone = Column(Integer, default=1)
 
     user = relationship("User", back_populates="skills")
 
