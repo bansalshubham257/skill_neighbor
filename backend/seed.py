@@ -48,14 +48,18 @@ users_data = [
 def seed_all(db):
     """Seed all data into the database using an existing session."""
 
-    # Clear existing data
+    # Clear existing data in correct order to respect Foreign Keys
+    db.query(SkillRating).delete()
+    db.query(SkillRequest).delete()
     db.query(SkillLike).delete()
     db.query(AdToken).delete()
     db.query(Skill).delete()
+    
     admin = db.query(User).filter(User.username == "admin").first()
     if admin:
         admin.society_id = None
         db.commit()
+    
     db.query(User).filter(User.username != "admin").delete()
     db.query(Society).delete()
     db.commit()
