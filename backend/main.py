@@ -26,8 +26,12 @@ Base.metadata.create_all(bind=engine)
 # Run seed if SEED_DB is set (e.g. SEED_DB=true on first deploy)
 if os.getenv("SEED_DB", "").lower() in ("true", "1", "yes"):
     from seed import seed_all
-    seed_all()
-    print("Database seeded successfully")
+    db_seed = SessionLocal()
+    try:
+        seed_all(db_seed)
+        print("Database seeded successfully")
+    finally:
+        db_seed.close()
 
 app = FastAPI()
 
