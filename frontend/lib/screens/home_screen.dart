@@ -95,6 +95,14 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
         ),
+        if (_currentPosition != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              '📍 ${_currentPosition!.latitude.toStringAsFixed(4)}, ${_currentPosition!.longitude.toStringAsFixed(4)}',
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ),
         Expanded(
           child: SkillListScreen(
             isNearby: showNearby,

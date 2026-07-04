@@ -37,7 +37,7 @@ db.query(Society).delete()
 db.commit()
 
 # Center
-clat, clng = 12.9716, 77.5946
+clat, clng = 12.9655, 77.7092
 
 def offset(lat, lng, dist_km, angle_deg):
     """Return (lat, lng) at given distance (km) and angle (degrees from north)"""
