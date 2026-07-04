@@ -325,6 +325,7 @@ async def get_nearby_skills(lat: float, lng: float, radius: float = 5.0, current
 
 @app.get("/skills/society/{society_id}")
 async def get_society_skills(society_id: int, current_user_id: int = None, db: Session = Depends(get_db)):
+    print(f"DEBUG: Fetching skills for society_id={society_id}, current_user_id={current_user_id}")
     society = db.query(Society).filter(Society.id == society_id).first()
     society_name = society.name if society else None
 
@@ -334,6 +335,7 @@ async def get_society_skills(society_id: int, current_user_id: int = None, db: S
         liked_skill_ids = {l.skill_id for l in likes}
 
     skills = db.query(Skill).join(User).filter(User.society_id == society_id).all()
+    print(f"DEBUG: Found {len(skills)} skills in society {society_id}")
     result = []
     for s in skills:
         u = db.query(User).filter(User.id == s.user_id).first()
@@ -353,6 +355,7 @@ async def get_society_skills(society_id: int, current_user_id: int = None, db: S
             "user_lat": u.latitude if u else None,
             "user_lng": u.longitude if u else None,
         })
+    print(f"DEBUG: Returning result: {result}")
     return result
 
 # --- Reward Endpoints ---
