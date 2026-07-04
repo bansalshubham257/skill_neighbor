@@ -15,6 +15,7 @@ void main() async {
   await AdService().init();
   AdService().loadInterstitialAd();
   AdService().loadRewardedAd();
+  AdService().loadBannerAd();
 
   await Hive.openBox('user_box');
   await Hive.openBox('bookmarks_box');

@@ -91,10 +91,13 @@ class _SkillListScreenState extends State<SkillListScreen> {
       } else {
         final box = Hive.box('user_box');
         final societyId = box.get('society_id');
+        debugPrint("DEBUG: Loading skills for society_id=$societyId");
         if (societyId != null) {
           skills = await api.fetchSocietySkills(societyId);
+          debugPrint("DEBUG: Fetched ${skills.length} skills");
         } else {
           skills = [];
+          debugPrint("DEBUG: societyId is null");
         }
       }
       likedSkillIds.clear();

@@ -327,38 +327,39 @@ async def get_nearby_skills(lat: float, lng: float, radius: float = 5.0, current
 
 @app.get("/skills/society/{society_id}")
 async def get_society_skills(society_id: int, current_user_id: int = None, db: Session = Depends(get_db)):
-    print(f"DEBUG: Fetching skills for society_id={society_id}, current_user_id={current_user_id}")
-    society = db.query(Society).filter(Society.id == society_id).first()
-    society_name = society.name if society else None
+    try:
+        society = db.query(Society).filter(Society.id == society_id).first()
+        society_name = society.name if society else None
 
-    liked_skill_ids = set()
-    if current_user_id:
-        likes = db.query(SkillLike).filter(SkillLike.user_id == current_user_id).all()
-        liked_skill_ids = {l.skill_id for l in likes}
+        liked_skill_ids = set()
+        if current_user_id:
+            likes = db.query(SkillLike).filter(SkillLike.user_id == current_user_id).all()
+            liked_skill_ids = {l.skill_id for l in likes}
 
-    skills = db.query(Skill).join(User, Skill.user_id == User.id).filter(User.society_id == society_id).all()
-    print(f"DEBUG: Found {len(skills)} skills in society {society_id}")
-    result = []
-    for s in skills:
-        u = db.query(User).filter(User.id == s.user_id).first()
-        result.append({
-            "id": s.id,
-            "user_id": s.user_id,
-            "category": s.category,
-            "title": s.title,
-            "description": s.description,
-            "price_type": s.price_type,
-            "hourly_rate": s.hourly_rate,
-            "phone_number": s.phone_number,
-            "email": u.email if u else None,
-            "society_id": society_id,
-            "society_name": society_name,
-            "is_liked": s.id in liked_skill_ids,
-            "user_lat": u.latitude if u else None,
-            "user_lng": u.longitude if u else None,
-        })
-    print(f"DEBUG: Returning result: {result}")
-    return result
+        skills = db.query(Skill).join(User, Skill.user_id == User.id).filter(User.society_id == society_id).all()
+        result = []
+        for s in skills:
+            u = db.query(User).filter(User.id == s.user_id).first()
+            result.append({
+                "id": s.id,
+                "user_id": s.user_id,
+                "category": s.category,
+                "title": s.title,
+                "description": s.description,
+                "price_type": s.price_type,
+                "hourly_rate": s.hourly_rate,
+                "phone_number": s.phone_number,
+                "email": u.email if u else None,
+                "society_id": society_id,
+                "society_name": society_name,
+                "is_liked": s.id in liked_skill_ids,
+                "user_lat": u.latitude if u else None,
+                "user_lng": u.longitude if u else None,
+            })
+        return result
+    except Exception as e:
+        import traceback
+        raise HTTPException(status_code=500, detail=str(e) + "\n" + traceback.format_exc())
 
 # --- Reward Endpoints ---
 

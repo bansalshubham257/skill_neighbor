@@ -21,6 +21,7 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   void dispose() {
     _usernameCtl.dispose();
+    _emailCtl.dispose();
     _passwordCtl.dispose();
     super.dispose();
   }

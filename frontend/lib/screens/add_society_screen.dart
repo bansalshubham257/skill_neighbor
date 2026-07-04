@@ -26,6 +26,12 @@ class _AddSocietyScreenState extends State<AddSocietyScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadSocieties();
+  }
+
+  @override
   void dispose() {
     _searchCtl.dispose();
     super.dispose();

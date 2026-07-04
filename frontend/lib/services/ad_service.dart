@@ -9,9 +9,28 @@ class AdService {
   // Test Ad Unit IDs (Android)
   static const String _interstitialId = 'ca-app-pub-3940256099942544/1033173712';
   static const String _rewardedId = 'ca-app-pub-3940256099942544/5224354917';
+  static const String _bannerId = 'ca-app-pub-3940256099942544/6300978111';
 
   InterstitialAd? _interstitialAd;
   RewardedAd? _rewardedAd;
+  BannerAd? _bannerAd;
+
+  // ... (keep init)
+
+  // Banner Ad
+  BannerAd? get bannerAd => _bannerAd;
+
+  void loadBannerAd() {
+    _bannerAd = BannerAd(
+      adUnitId: _bannerId,
+      size: AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdFailedToLoad: (ad, err) => ad.dispose(),
+      ),
+    );
+    _bannerAd!.load();
+  }
 
   Future<void> init() async {
     await MobileAds.instance.initialize();
