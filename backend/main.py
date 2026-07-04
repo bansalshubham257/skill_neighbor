@@ -50,6 +50,22 @@ if os.getenv("SEED_DB", "").lower() in ("true", "1", "yes"):
     finally:
         db_seed.close()
 
+# Run startup tasks (cleanup)
+def startup_tasks():
+    db = SessionLocal()
+    try:
+        # Cleanup old requests (30 days)
+        cutoff = datetime.datetime.utcnow() - datetime.timedelta(days=30)
+        db.query(SkillRequest).filter(SkillRequest.created_at < cutoff).delete()
+        db.commit()
+        print("Cleanup complete")
+    except Exception as e:
+        print(f"Cleanup failed: {e}")
+    finally:
+        db.close()
+
+startup_tasks()
+
 app = FastAPI()
 
 # --- Schemas ---
