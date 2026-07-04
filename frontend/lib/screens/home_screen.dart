@@ -24,6 +24,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _getLocation() async {
     try {
+      LocationPermission permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Location permission needed for nearby search')),
+          );
+        }
+        return;
+      }
       final pos = await Geolocator.getCurrentPosition();
       if (mounted) setState(() => _currentPosition = pos);
     } catch (_) {}

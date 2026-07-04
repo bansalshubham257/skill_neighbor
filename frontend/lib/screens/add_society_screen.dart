@@ -28,6 +28,16 @@ class _AddSocietyScreenState extends State<AddSocietyScreen> {
 
     setState(() => _isSubmitting = true);
     try {
+      LocationPermission permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Location permission needed to create a society')),
+          );
+          setState(() => _isSubmitting = false);
+        }
+        return;
+      }
       final pos = await Geolocator.getCurrentPosition();
       final api = Provider.of<ApiService>(context, listen: false);
       final result = await api.createSociety(
