@@ -334,7 +334,7 @@ async def get_society_skills(society_id: int, current_user_id: int = None, db: S
         likes = db.query(SkillLike).filter(SkillLike.user_id == current_user_id).all()
         liked_skill_ids = {l.skill_id for l in likes}
 
-    skills = db.query(Skill).join(User).filter(User.society_id == society_id).all()
+    skills = db.query(Skill).join(User, Skill.user_id == User.id).filter(User.society_id == society_id).all()
     print(f"DEBUG: Found {len(skills)} skills in society {society_id}")
     result = []
     for s in skills:
