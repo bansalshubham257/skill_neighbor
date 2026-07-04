@@ -263,7 +263,6 @@ class ApiService {
   Future<void> claimReward(String tokenType) async {
     final uid = userId;
     if (uid == null) throw Exception("User not logged in");
-    await Future.delayed(const Duration(seconds: 3));
     await _dio.post('/rewards/claim', queryParameters: {
       'user_id': uid,
       'token_type': tokenType,
@@ -282,5 +281,10 @@ class ApiService {
     } catch (e) {
       return false;
     }
+  }
+
+  // Account
+  Future<void> deleteAccount(int userId) async {
+    await _dio.post('/auth/delete-account', queryParameters: {'user_id': userId});
   }
 }

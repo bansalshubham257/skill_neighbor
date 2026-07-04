@@ -168,14 +168,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onTap: () => Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const SettingsScreen())),
           ),
-          ListTile(
-            leading: const Icon(Icons.logout, color: Colors.red),
-            title: Text(AppStrings.get('logout', lang: lang),
-                style: const TextStyle(color: Colors.red)),
-            onTap: () => _logout(context),
-          ),
-        ],
-      ),
-    );
-  }
+           ListTile(
+             leading: const Icon(Icons.logout, color: Colors.red),
+             title: Text(AppStrings.get('logout', lang: lang),
+                 style: const TextStyle(color: Colors.red)),
+             onTap: () => _logout(context),
+           ),
+           const Divider(),
+           ListTile(
+             leading: const Icon(Icons.delete_forever, color: Colors.red),
+             title: const Text('Delete Account', style: TextStyle(color: Colors.red)),
+             subtitle: const Text('Permanently remove your account and all data', style: TextStyle(color: Colors.red, fontSize: 12)),
+             onTap: () => _confirmDeleteAccount(context),
+           ),
+         ],
+       ),
+     );
+   }
+
+   Future<void> _confirmDeleteAccount(BuildContext context) async {
+     final confirm = await showDialog<bool>(
+       context: context,
+       builder: (ctx) => AlertDialog(
+         title: const Text('Delete Account?'),
+         content: const Text('This action is permanent. All your skills, requests, and profile data will be lost forever. Are you sure?'),
+         actions: [
+           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+           TextButton(
+             onPressed: () => Navigator.pop(ctx, true),
+             child: const Text('Delete', style: TextStyle(color: Colors.red)),
+           ),
+         ],
+       ),
+     );
+
+     if (confirm == true) {
+       try {
+         final api = Provider.of<ApiService>(context, listen: false);
+         final userId = api.userId;
+         if (userId != null) {
+           await api.deleteAccount(userId);
+           // Clear local data
+           final box = Hive.box('user_box');
+           box.clear();
+           if (mounted) {
+             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Account deleted successfully.')));
+             Navigator.pushReplacementNamed(context, '/login');
+           }
+         }
+       } catch (e) {
+         if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+         }
+       }
+     }
+   }
+
 }

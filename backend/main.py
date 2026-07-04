@@ -501,4 +501,34 @@ async def respond_request(request_id: int, user_id: int, status: str, db: Sessio
 
 # --- Notification Endpoints ---
 
-# --- End of Endpoints ---
+@app.post("/auth/delete-account")
+async def delete_account(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    try:
+        # 1. Delete Skill Ratings (given and received)
+        db.query(SkillRating).filter(
+            (SkillRating.from_user_id == user_id) | (SkillRating.to_user_id == user_id)
+        ).delete()
+
+        # 2. Delete Skill Requests (sent and received)
+        db.query(SkillRequest).filter(
+            (SkillRequest.from_user_id == user_id) | (SkillRequest.to_user_id == user_id)
+        ).delete()
+
+        # 3. Delete Skills
+        db.query(Skill).filter(Skill.user_id == user_id).delete()
+
+        # 4. Delete Ad Tokens
+        db.query(AdToken).filter(AdToken.user_id == user_id).delete()
+
+        # 5. Finally, delete the User
+        db.delete(user)
+        
+        db.commit()
+        return {"status": "success", "message": "Account and all associated data deleted."}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to delete account: {str(e)}")

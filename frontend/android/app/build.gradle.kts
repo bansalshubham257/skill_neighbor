@@ -1,3 +1,7 @@
+import java.util.Properties
+import java.io.FileInputStream
+import java.io.File
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -21,17 +25,30 @@ android {
 
     defaultConfig {
         applicationId = "com.skillneighbor.app"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            val keystorePropertiesFile = rootProject.file("key.properties")
+            val keystoreProperties = Properties()
+            if (keystorePropertiesFile.exists()) {
+                keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+            }
+
+            storeFile = keystoreProperties.getProperty("storeFile")?.let { File(it) }
+            storePassword = keystoreProperties.getProperty("storePassword")
+            keyAlias = keystoreProperties.getProperty("keyAlias")
+            keyPassword = keystoreProperties.getProperty("keyPassword")
+        }
+    }
+
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
