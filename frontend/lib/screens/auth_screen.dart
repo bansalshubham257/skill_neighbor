@@ -139,13 +139,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 ),
               ),
               if (!_isRegister)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    'Test: admin / admin',
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-                  ),
-                ),
+                const SizedBox(height: 8),
             ],
           ),
         ),

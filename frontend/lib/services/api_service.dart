@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:hive/hive.dart';
 
-// Update this URL after deploying backend to Railway
-const String kBaseUrl = 'http://192.168.0.3:8000';
-// Example Railway URL: 'https://skill-neighbor-backend.up.railway.app'
+// Set via --dart-define=API_BASE_URL=... during build
+// Defaults to local dev server
+const String kBaseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: 'http://10.0.2.2:8000');
 
 class ApiService {
   final Dio _dio = Dio(BaseOptions(baseUrl: kBaseUrl));

@@ -23,26 +23,6 @@ def get_db():
 
 Base.metadata.create_all(bind=engine)
 
-# Seed test user
-def seed_test_user():
-    db = SessionLocal()
-    try:
-        existing = db.query(User).filter(User.username == "admin").first()
-        if not existing:
-            user = User(
-                username="admin",
-                password="admin",
-                email="admin@test.com",
-                latitude=12.9716,
-                longitude=77.5946,
-            )
-            db.add(user)
-            db.commit()
-    finally:
-        db.close()
-
-seed_test_user()
-
 app = FastAPI()
 
 # --- Schemas ---
