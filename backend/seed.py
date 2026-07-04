@@ -5,9 +5,8 @@ Run: DATABASE_URL="..." python3 seed.py
 """
 import os, math, sys
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import text
 from models import Base, User, Society, Skill, AdToken, SkillLike, SCHEMA
 from passlib.context import CryptContext
 
@@ -15,7 +14,6 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
-
 
 clat, clng = 12.9655, 77.7092
 
@@ -73,11 +71,13 @@ def seed_all(db):
     print("")
     for i, (uname, pwd, email, stitle, sdesc, cat, rate, phone) in enumerate(users_data):
         if uname == "shubham":
+            # shubham has no society - forced to choose on first login
             user = db.query(User).filter(User.username == uname).first()
-        if not user:
-            user = User(username=uname, password=hash_password(pwd), email=email, latitude=clat, longitude=clng)
-            db.add(user); db.commit(); db.refresh(user)
-        db.add(Skill(user_id=user.id, title=stitle, description=sdesc, category=cat, price_type="Fixed", hourly_rate=rate, phone_number=phone))
+            if not user:
+                user = User(username=uname, password=hash_password(pwd), email=email, latitude=clat, longitude=clng)
+                db.add(user); db.commit(); db.refresh(user)
+            
+            db.add(Skill(user_id=user.id, title=stitle, description=sdesc, category=cat, price_type="Fixed", hourly_rate=rate, phone_number=phone))
             for tt in ["CONTACT", "CHAT", "BOOKMARK"]:
                 db.add(AdToken(user_id=user.id, token_type=tt, count=5))
             db.commit()
@@ -86,11 +86,11 @@ def seed_all(db):
 
         slat, slng = offset(clat, clng, societies_data[i][1], societies_data[i][2])
         user = db.query(User).filter(User.username == uname).first()
-    if not user:
-        user = User(username=uname, password=hash_password(pwd), email=email, latitude=slat, longitude=slng, society_id=created_societies[i].id)
-        db.add(user); db.commit(); db.refresh(user)
-    else:
-        user.latitude = slat; user.longitude = slng; user.society_id = created_societies[i].id; user.password = hash_password(pwd); db.commit()
+        if not user:
+            user = User(username=uname, password=hash_password(pwd), email=email, latitude=slat, longitude=slng, society_id=created_societies[i].id)
+            db.add(user); db.commit(); db.refresh(user)
+        else:
+            user.latitude = slat; user.longitude = slng; user.society_id = created_societies[i].id; user.password = hash_password(pwd); db.commit()
 
         db.add(Skill(user_id=user.id, title=stitle, description=sdesc, category=cat, price_type="Fixed", hourly_rate=rate, phone_number=phone))
         for tt in ["CONTACT", "CHAT", "BOOKMARK"]:
@@ -105,10 +105,12 @@ if __name__ == "__main__":
     DATABASE_URL = os.getenv("DATABASE_URL")
     if not DATABASE_URL:
         print("Set DATABASE_URL env var"); sys.exit(1)
+    
     engine = create_engine(DATABASE_URL)
     with engine.connect() as conn:
         conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}"))
         conn.commit()
+        
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     SessionLocal = sessionmaker(bind=engine)
