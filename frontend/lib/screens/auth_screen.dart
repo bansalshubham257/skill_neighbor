@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
-import 'package:dio/dio.dart';
+import 'package:geolocator/geolocator.dart';
 import '../services/api_service.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -36,7 +36,15 @@ class _AuthScreenState extends State<AuthScreen> {
       final api = Provider.of<ApiService>(context, listen: false);
 
       if (_isRegister) {
-        await api.register(username, password, email: _emailCtl.text.trim());
+        LocationPermission permission = await Geolocator.requestPermission();
+        Position? pos;
+        if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
+            pos = await Geolocator.getCurrentPosition();
+        }
+        await api.register(username, password, 
+                           email: _emailCtl.text.trim(),
+                           lat: pos?.latitude ?? 0.0,
+                           lng: pos?.longitude ?? 0.0);
       }
 
       final result = await api.login(username, password);

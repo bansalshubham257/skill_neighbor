@@ -196,33 +196,8 @@ async def delete_skill(skill_id: int, user_id: int, db: Session = Depends(get_db
 
 @app.get("/skills/favorites")
 async def get_favorite_skills(user_id: int, db: Session = Depends(get_db)):
-    print(f"DEBUG: Fetching favorites for user_id={user_id}")
-    likes = db.query(SkillLike).filter(SkillLike.user_id == user_id).all()
-    print(f"DEBUG: Found likes: {likes}")
-    skill_ids = [l.skill_id for l in likes]
-    if not skill_ids:
-        print("DEBUG: No liked skill IDs found.")
-        return []
-    skills = db.query(Skill).filter(Skill.id.in_(skill_ids)).all()
-    print(f"DEBUG: Found skills: {skills}")
-    result = []
-    for s in skills:
-        u = db.query(User).filter(User.id == s.user_id).first()
-        result.append({
-            "id": s.id,
-            "user_id": s.user_id,
-            "category": s.category,
-            "title": s.title,
-            "description": s.description,
-            "price_type": s.price_type,
-            "hourly_rate": s.hourly_rate,
-            "phone_number": s.phone_number,
-            "email": u.email if u else None,
-            "society_id": u.society_id if u else None,
-            "society_name": db.query(Society.name).filter(Society.id == u.society_id).scalar() if u and u.society_id else None,
-        })
-    print(f"DEBUG: Returning result: {result}")
-    return result
+    print(f"DEBUG: Fetching favorites for user_id={user_id} (Local only mode)")
+    return []
 
 # --- Society Endpoints ---
 
@@ -306,9 +281,6 @@ async def get_nearby_skills(lat: float, lng: float, radius: float = 5.0, current
         return []
 
     liked_skill_ids = set()
-    if current_user_id:
-        likes = db.query(SkillLike).filter(SkillLike.user_id == current_user_id).all()
-        liked_skill_ids = {l.skill_id for l in likes}
 
     skills = db.query(Skill).filter(Skill.user_id.in_(nearby_user_ids)).all()
     result = []
@@ -339,9 +311,6 @@ async def get_society_skills(society_id: int, current_user_id: int = None, db: S
         society_name = society.name if society else None
 
         liked_skill_ids = set()
-        if current_user_id:
-            likes = db.query(SkillLike).filter(SkillLike.user_id == current_user_id).all()
-            liked_skill_ids = {l.skill_id for l in likes}
 
         skills = db.query(Skill).join(User, Skill.user_id == User.id).filter(User.society_id == society_id).all()
         result = []

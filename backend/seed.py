@@ -7,7 +7,7 @@ import os, math, sys
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from models import Base, User, Society, Skill, AdToken, SkillLike, SkillRequest, SkillRating, SCHEMA
+from models import Base, User, Society, Skill, AdToken, SkillRequest, SkillRating, SCHEMA
 from passlib.context import CryptContext
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -39,7 +39,6 @@ def seed_all(db):
     # Clear existing data in correct order to respect Foreign Keys
     db.query(SkillRating).delete()
     db.query(SkillRequest).delete()
-    db.query(SkillLike).delete()
     db.query(AdToken).delete()
     db.query(Skill).delete()
     
