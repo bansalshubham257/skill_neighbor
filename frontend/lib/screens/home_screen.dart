@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:hive/hive.dart';
 import 'skill_list_screen.dart';
 import 'add_skill_screen.dart';
 import 'profile_screen.dart';
@@ -107,6 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: SkillListScreen(
             isNearby: showNearby,
             currentPosition: _currentPosition,
+            userSocietyId: Hive.box('user_box').get('society_id'),
           ),
         ),
       ],

@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from models import Base, User, Society, Skill, AdToken
 import os
 import math
+import datetime
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
@@ -131,18 +132,37 @@ async def create_skill(user_id: int, data: SkillCreate, db: Session = Depends(ge
 
 # --- Society Endpoints ---
 
+def check_society_change_limit(user):
+    if user.last_society_change and (datetime.datetime.utcnow() - user.last_society_change).days < 30:
+        remaining = 30 - (datetime.datetime.utcnow() - user.last_society_change).days
+        raise HTTPException(status_code=400,
+            detail=f"You can only change society once per month. {remaining} days remaining.")
+
+def set_society(user, society_id, db):
+    user.society_id = society_id
+    user.last_society_change = datetime.datetime.utcnow()
+    db.commit()
+
+@app.get("/societies/list")
+async def list_societies(db: Session = Depends(get_db)):
+    societies = db.query(Society).all()
+    return [{"id": s.id, "name": s.name, "latitude": s.latitude, "longitude": s.longitude} for s in societies]
+
 @app.post("/societies/create")
 async def create_society(user_id: int, data: SocietyCreate, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.society_id is not None:
+        raise HTTPException(status_code=400, detail="You are already in a society. Leave it first to create a new one.")
+    check_society_change_limit(user)
+
     society = Society(name=data.name, latitude=data.lat, longitude=data.lng)
     db.add(society)
     db.commit()
     db.refresh(society)
 
-    user = db.query(User).filter(User.id == user_id).first()
-    if user:
-        user.society_id = society.id
-        db.commit()
-
+    set_society(user, society.id, db)
     return {"status": "success", "society_id": society.id, "name": society.name}
 
 @app.post("/societies/leave")
@@ -151,6 +171,7 @@ async def leave_society(user_id: int, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     user.society_id = None
+    user.last_society_change = datetime.datetime.utcnow()
     db.commit()
     return {"status": "success", "message": "Left society"}
 
@@ -162,8 +183,10 @@ async def join_society(user_id: int, society_id: int, db: Session = Depends(get_
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    user.society_id = society.id
-    db.commit()
+    if user.society_id is not None:
+        raise HTTPException(status_code=400, detail="You are already in a society. Leave it first.")
+    check_society_change_limit(user)
+    set_society(user, society.id, db)
     return {"status": "success", "society_id": society.id, "name": society.name}
 
 # --- Search Endpoints ---
@@ -195,11 +218,15 @@ async def get_nearby_skills(lat: float, lng: float, radius: float = 5.0, db: Ses
             "hourly_rate": s.hourly_rate,
             "phone_number": s.phone_number,
             "email": u.email if u else None,
+            "society_id": u.society_id if u else None,
+            "society_name": db.query(Society.name).filter(Society.id == u.society_id).scalar() if u and u.society_id else None,
         })
     return result
 
 @app.get("/skills/society/{society_id}")
 async def get_society_skills(society_id: int, db: Session = Depends(get_db)):
+    society = db.query(Society).filter(Society.id == society_id).first()
+    society_name = society.name if society else None
     skills = db.query(Skill).join(User).filter(User.society_id == society_id).all()
     result = []
     for s in skills:
@@ -214,6 +241,8 @@ async def get_society_skills(society_id: int, db: Session = Depends(get_db)):
             "hourly_rate": s.hourly_rate,
             "phone_number": s.phone_number,
             "email": u.email if u else None,
+            "society_id": society_id,
+            "society_name": society_name,
         })
     return result
 

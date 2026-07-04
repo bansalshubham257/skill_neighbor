@@ -14,16 +14,20 @@ void main() async {
   await Hive.openBox('bookmarks_box');
   await Hive.openBox('settings_box');
 
+  final box = Hive.box('user_box');
+  final isLoggedIn = box.get('user_id') != null;
+
   runApp(
     Provider(
       create: (_) => ApiService(),
-      child: const SkillNeighborApp(),
+      child: SkillNeighborApp(isLoggedIn: isLoggedIn),
     ),
   );
 }
 
 class SkillNeighborApp extends StatelessWidget {
-  const SkillNeighborApp({super.key});
+  final bool isLoggedIn;
+  const SkillNeighborApp({super.key, this.isLoggedIn = false});
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +44,7 @@ class SkillNeighborApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      initialRoute: '/login',
+      initialRoute: isLoggedIn ? '/home' : '/login',
       routes: {
         '/login': (_) => const AuthScreen(),
         '/home': (_) => const HomeScreen(),

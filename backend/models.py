@@ -13,6 +13,7 @@ class User(Base):
     latitude = Column(Float)
     longitude = Column(Float)
     society_id = Column(Integer, ForeignKey("societies.id"), nullable=True)
+    last_society_change = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     skills = relationship("Skill", back_populates="user")

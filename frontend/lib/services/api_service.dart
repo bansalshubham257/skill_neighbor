@@ -57,6 +57,11 @@ class ApiService {
   }
 
   // Society
+  Future<List<dynamic>> fetchSocieties() async {
+    final response = await _dio.get('/societies/list');
+    return response.data;
+  }
+
   Future<Map<String, dynamic>> createSociety({
     required String name,
     required double lat,
@@ -70,6 +75,16 @@ class ApiService {
       'name': name,
       'lat': lat,
       'lng': lng,
+    });
+    return response.data;
+  }
+
+  Future<Map<String, dynamic>> joinSociety(int societyId) async {
+    final uid = userId;
+    if (uid == null) throw Exception("Not logged in");
+    final response = await _dio.post('/societies/join', queryParameters: {
+      'user_id': uid,
+      'society_id': societyId,
     });
     return response.data;
   }

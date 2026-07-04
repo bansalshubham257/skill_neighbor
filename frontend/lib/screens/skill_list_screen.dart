@@ -8,11 +8,13 @@ import 'skill_detail_screen.dart';
 class SkillListScreen extends StatefulWidget {
   final bool isNearby;
   final Position? currentPosition;
+  final int? userSocietyId;
 
   const SkillListScreen({
     super.key,
     required this.isNearby,
     this.currentPosition,
+    this.userSocietyId,
   });
 
   @override
@@ -110,6 +112,12 @@ class _SkillListScreenState extends State<SkillListScreen> {
                       itemCount: skills.length,
                       itemBuilder: (context, index) {
                         final skill = skills[index];
+                        final societyName = skill['society_name'];
+                        final skillSocietyId = skill['society_id'];
+                        final isSameSociety = widget.userSocietyId != null &&
+                            skillSocietyId != null &&
+                            widget.userSocietyId == skillSocietyId;
+
                         return Card(
                           margin: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 4),
@@ -120,9 +128,60 @@ class _SkillListScreenState extends State<SkillListScreen> {
                                   ? skill['category'][0]
                                   : '?'),
                             ),
-                            title: Text(skill['title'] ?? 'Untitled'),
-                            subtitle: Text(
-                                '${skill['description'] ?? ''}\n\$${skill['hourly_rate'] ?? 'Negotiable'}/hr'),
+                            title: Row(
+                              children: [
+                                Flexible(
+                                  child: Text(skill['title'] ?? 'Untitled',
+                                      overflow: TextOverflow.ellipsis),
+                                ),
+                                if (isSameSociety)
+                                  Container(
+                                    margin: const EdgeInsets.only(left: 6),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.orange.shade100,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.home,
+                                            size: 12,
+                                            color: Colors.orange.shade800),
+                                        const SizedBox(width: 2),
+                                        Text('Same Society',
+                                            style: TextStyle(
+                                                fontSize: 10,
+                                                color: Colors.orange.shade800)),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('${skill['description'] ?? ''}'),
+                                Row(
+                                  children: [
+                                    Text('\$${skill['hourly_rate'] ?? 'Negotiable'}/hr',
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                    const Spacer(),
+                                    if (societyName != null)
+                                      Icon(Icons.groups,
+                                          size: 12,
+                                          color: Colors.grey.shade600),
+                                    if (societyName != null)
+                                      Text(' $societyName',
+                                          style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey.shade600)),
+                                  ],
+                                ),
+                              ],
+                            ),
                             isThreeLine: true,
                             trailing:
                                 const Icon(Icons.arrow_forward_ios, size: 16),

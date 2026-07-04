@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
 import 'package:dio/dio.dart';
 import '../services/api_service.dart';
@@ -22,20 +23,36 @@ class _AddSkillScreenState extends State<AddSkillScreen> {
   String _priceType = 'Negotiable';
   bool _isSubmitting = false;
 
+  List<dynamic> _societies = [];
+  int? _selectedSocietyId;
+  bool _loadingSocieties = true;
+
   final List<String> _categories = [
-    'Tutoring',
-    'Fitness',
-    'Music',
-    'Cooking',
-    'Plumbing',
-    'Electrical',
-    'Cleaning',
-    'Photography',
-    'Gardening',
-    'Pet Care',
-    'IT Support',
-    'Other',
+    'Tutoring', 'Fitness', 'Music', 'Cooking', 'Plumbing',
+    'Electrical', 'Cleaning', 'Photography', 'Gardening',
+    'Pet Care', 'IT Support', 'Other',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    final box = Hive.box('user_box');
+    _selectedSocietyId = box.get('society_id');
+    _loadSocieties();
+  }
+
+  Future<void> _loadSocieties() async {
+    try {
+      final api = Provider.of<ApiService>(context, listen: false);
+      final list = await api.fetchSocieties();
+      if (mounted) setState(() {
+        _societies = list;
+        _loadingSocieties = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loadingSocieties = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -52,6 +69,17 @@ class _AddSkillScreenState extends State<AddSkillScreen> {
     setState(() => _isSubmitting = true);
     try {
       final api = Provider.of<ApiService>(context, listen: false);
+
+      if (_selectedSocietyId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Please select or join a society first')),
+          );
+        }
+        setState(() => _isSubmitting = false);
+        return;
+      }
+
       await api.createSkill(
         title: _titleCtl.text.trim(),
         description: _descCtl.text.trim(),
@@ -78,7 +106,7 @@ class _AddSkillScreenState extends State<AddSkillScreen> {
     } on DioException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.response?.data ?? e.message}')),
+          SnackBar(content: Text('${e.response?.data?['detail'] ?? e.message}')),
         );
       }
     } catch (e) {
@@ -94,6 +122,9 @@ class _AddSkillScreenState extends State<AddSkillScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final box = Hive.box('user_box');
+    final currentSocietyName = box.get('society_name');
+
     return Scaffold(
       appBar: AppBar(title: const Text('Add a Skill')),
       body: Form(
@@ -101,6 +132,43 @@ class _AddSkillScreenState extends State<AddSkillScreen> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
+            if (_loadingSocieties)
+              const LinearProgressIndicator()
+            else ...[
+              if (currentSocietyName != null) ...[
+                Card(
+                  color: Colors.orange.shade50,
+                  child: ListTile(
+                    leading: const Icon(Icons.home, color: Colors.orange),
+                    title: Text('Your Society: $currentSocietyName'),
+                    subtitle: const Text('Skills will be listed under this society'),
+                    trailing: const Icon(Icons.check_circle, color: Colors.green),
+                  ),
+                ),
+              ] else ...[
+                DropdownButtonFormField<int>(
+                  value: _selectedSocietyId,
+                  decoration: const InputDecoration(
+                    labelText: 'Choose a Society *',
+                    prefixIcon: Icon(Icons.groups),
+                  ),
+                  hint: const Text('Select your society'),
+                  items: _societies.map((s) => DropdownMenuItem<int>(
+                    value: s['id'] as int,
+                    child: Text(s['name'] as String),
+                  )).toList(),
+                  onChanged: (v) => setState(() => _selectedSocietyId = v),
+                  validator: (v) => v == null ? 'Select a society' : null,
+                ),
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  onPressed: () => Navigator.pushNamed(context, '/add-society'),
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text("Can't find yours? Create a new society"),
+                ),
+              ],
+            ],
+            const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               value: _category,
               decoration: const InputDecoration(labelText: 'Category'),
@@ -113,16 +181,14 @@ class _AddSkillScreenState extends State<AddSkillScreen> {
             TextFormField(
               controller: _titleCtl,
               decoration: const InputDecoration(labelText: 'Title'),
-              validator: (v) =>
-                  v == null || v.trim().isEmpty ? 'Required' : null,
+              validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _descCtl,
               decoration: const InputDecoration(labelText: 'Description'),
               maxLines: 3,
-              validator: (v) =>
-                  v == null || v.trim().isEmpty ? 'Required' : null,
+              validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -132,8 +198,7 @@ class _AddSkillScreenState extends State<AddSkillScreen> {
                 hintText: 'Visible after ad unlock',
               ),
               keyboardType: TextInputType.phone,
-              validator: (v) =>
-                  v == null || v.trim().isEmpty ? 'Required' : null,
+              validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
@@ -149,9 +214,7 @@ class _AddSkillScreenState extends State<AddSkillScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _rateCtl,
-                decoration: const InputDecoration(
-                  labelText: 'Hourly Rate (\$)',
-                ),
+                decoration: const InputDecoration(labelText: 'Hourly Rate (\$)'),
                 keyboardType: TextInputType.number,
               ),
             ],
@@ -163,8 +226,7 @@ class _AddSkillScreenState extends State<AddSkillScreen> {
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    child: const Text('Publish Skill',
-                        style: TextStyle(fontSize: 18)),
+                    child: const Text('Publish Skill', style: TextStyle(fontSize: 18)),
                   ),
           ],
         ),
