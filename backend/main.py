@@ -67,7 +67,7 @@ class LoginRequest(BaseModel):
 class RegisterRequest(BaseModel):
     username: str
     password: str
-    email: str
+    email: Optional[str] = None
     lat: float
     lng: float
 
@@ -121,12 +121,6 @@ async def register(data: RegisterRequest, db: Session = Depends(get_db)):
     if existing:
         raise HTTPException(status_code=400, detail="Username already exists")
     
-    # Optionally check for email existence if provided
-    if data.email:
-        existing_email = db.query(User).filter(User.email == data.email).first()
-        if existing_email:
-            raise HTTPException(status_code=400, detail="Email already exists")
-
     user = User(
         username=data.username,
         password=hash_password(data.password),
