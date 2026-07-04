@@ -116,11 +116,17 @@ async def login(data: LoginRequest, db: Session = Depends(get_db)):
 
 @app.post("/auth/register")
 async def register(data: RegisterRequest, db: Session = Depends(get_db)):
-    existing = db.query(User).filter(
-        (User.username == data.username) | (User.email == data.email)
-    ).first()
+    # Only check for username existence
+    existing = db.query(User).filter(User.username == data.username).first()
     if existing:
-        raise HTTPException(status_code=400, detail="Username or email already exists")
+        raise HTTPException(status_code=400, detail="Username already exists")
+    
+    # Optionally check for email existence if provided
+    if data.email:
+        existing_email = db.query(User).filter(User.email == data.email).first()
+        if existing_email:
+            raise HTTPException(status_code=400, detail="Email already exists")
+
     user = User(
         username=data.username,
         password=hash_password(data.password),
