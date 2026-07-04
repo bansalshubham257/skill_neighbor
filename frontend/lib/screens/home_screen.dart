@@ -119,6 +119,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _selectedCategory;
 
   List<Map<String, dynamic>> get _topCategories => [
+    {'name': null, 'icon': Icons.grid_view, 'label': 'All'},
     {'name': 'Tutor', 'icon': Icons.school},
     {'name': 'Music', 'icon': Icons.music_note},
     {'name': 'Technology', 'icon': Icons.computer},
@@ -136,9 +137,9 @@ class _HomeScreenState extends State<HomeScreen> {
             borderRadius: BorderRadius.circular(12),
             child: Image.asset(
               'assets/skill_banner.png',
-              height: 130,
+              height: 180,
               width: double.infinity,
-              fit: BoxFit.cover,
+              fit: BoxFit.contain,
             ),
           ),
         ),
@@ -148,15 +149,17 @@ class _HomeScreenState extends State<HomeScreen> {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             children: _topCategories.map((cat) {
-              final selected = _selectedCategory == cat['name'];
+              final name = cat['name'] as String?;
+              final label = cat['label'] as String? ?? name;
+              final selected = _selectedCategory == name;
               return Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: ChoiceChip(
                   avatar: Icon(cat['icon'] as IconData, size: 16),
-                  label: Text(cat['name'] as String, style: const TextStyle(fontSize: 12)),
+                  label: Text(label ?? '', style: const TextStyle(fontSize: 12)),
                   selected: selected,
                   onSelected: (val) {
-                    setState(() => _selectedCategory = val ? cat['name'] as String? : null);
+                    setState(() => _selectedCategory = val ? name : null);
                   },
                 ),
               );
@@ -182,14 +185,6 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
         ),
-        if (_currentPosition != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              '📍 ${_currentPosition!.latitude.toStringAsFixed(4)}, ${_currentPosition!.longitude.toStringAsFixed(4)}',
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-          ),
         Expanded(
           child: SkillListScreen(
             isNearby: showNearby,

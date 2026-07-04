@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hive/hive.dart';
@@ -51,6 +52,18 @@ class _SkillListScreenState extends State<SkillListScreen> {
       }
     }
   }
+
+  double _distance(double lat1, double lng1, double lat2, double lng2) {
+    const R = 6371000;
+    final dlat = _rad(lat2 - lat1);
+    final dlng = _rad(lng2 - lng1);
+    final a = math.sin(dlat / 2) * math.sin(dlat / 2) +
+        math.cos(_rad(lat1)) * math.cos(_rad(lat2)) * math.sin(dlng / 2) * math.sin(dlng / 2);
+    final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+    return R * c;
+  }
+
+  double _rad(double deg) => deg * math.pi / 180;
 
   @override
   void initState() {
@@ -243,14 +256,27 @@ class _SkillListScreenState extends State<SkillListScreen> {
                                             fontWeight: FontWeight.bold)),
                                     const Spacer(),
                                     if (societyName != null)
-                                      Icon(Icons.groups,
-                                          size: 12,
-                                          color: Colors.grey.shade600),
+                                    Icon(Icons.groups,
+                                        size: 12,
+                                        color: Colors.grey.shade600),
                                     if (societyName != null)
                                       Text(' $societyName',
                                           style: TextStyle(
                                               fontSize: 12,
                                               color: Colors.grey.shade600)),
+                                    if (!isSameSociety &&
+                                        widget.currentPosition != null &&
+                                        skill['user_lat'] != null &&
+                                        skill['user_lng'] != null)
+                                      Text(
+                                        ' · ${(_distance(
+                                          widget.currentPosition!.latitude,
+                                          widget.currentPosition!.longitude,
+                                          (skill['user_lat'] as num).toDouble(),
+                                          (skill['user_lng'] as num).toDouble(),
+                                        ) / 1000).toStringAsFixed(1)} km',
+                                        style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                                      ),
                                   ],
                                 ),
                               ],
