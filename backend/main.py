@@ -7,7 +7,9 @@ from models import Base, User, Society, Skill, AdToken
 import os
 import math
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost/skillneighbor")
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable is not set")
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

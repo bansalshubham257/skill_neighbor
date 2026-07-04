@@ -4,7 +4,8 @@ import 'package:dio/dio.dart';
 import '../services/api_service.dart';
 
 class AddSkillScreen extends StatefulWidget {
-  const AddSkillScreen({super.key});
+  final VoidCallback? onSkillAdded;
+  const AddSkillScreen({super.key, this.onSkillAdded});
 
   @override
   State<AddSkillScreen> createState() => _AddSkillScreenState();
@@ -66,7 +67,13 @@ class _AddSkillScreenState extends State<AddSkillScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Skill published!')),
         );
-        Navigator.pop(context);
+        setState(() {
+          _titleCtl.clear();
+          _descCtl.clear();
+          _phoneCtl.clear();
+          _rateCtl.clear();
+        });
+        widget.onSkillAdded?.call();
       }
     } on DioException catch (e) {
       if (mounted) {

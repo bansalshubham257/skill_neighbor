@@ -33,7 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final screens = [
       _buildExplore(),
-      const AddSkillScreen(),
+      AddSkillScreen(onSkillAdded: () => setState(() => _currentIndex = 0)),
       const ProfileScreen(),
     ];
 
