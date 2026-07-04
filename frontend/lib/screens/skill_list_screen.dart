@@ -77,6 +77,8 @@ class _SkillListScreenState extends State<SkillListScreen> {
     if (old.isNearby != widget.isNearby ||
         old.currentPosition != widget.currentPosition) {
       loadSkills();
+    } else if (old.categoryFilter != widget.categoryFilter) {
+      _filter();
     }
   }
 
